@@ -1,84 +1,107 @@
-// FIX: Added component implementation to manage challenge views.
+
 import React, { useState } from 'react';
 import { Player, Rank, MatchHistory } from '../../types';
-import ChallengeLobby from './ChallengeLobby';
 import ChallengeMatch from './ChallengeMatch';
 import ChallengeHistory from './ChallengeHistory';
 import { database } from '../../services/firebase';
 import { Spinner } from '../ui/Spinner';
+import { RANKS } from '../../gameConfig';
+import ClashSquadMatch from './ClashSquadMatch';
 
 interface ChallengeScreenProps {
     player: Player;
+    gameMode: 'br' | 'cs';
     onBack: () => void;
     onBalanceUpdate: (newGold: number) => void;
     onRankUpdate: (newRank: Rank, newRankPoints: number) => void;
+    setPlayer: React.Dispatch<React.SetStateAction<Player | null>>;
 }
 
-type ChallengeView = 'lobby' | 'finding_match' | 'in_match' | 'history';
+type ChallengeView = 'finding_match' | 'in_match' | 'history';
 
-const ChallengeScreen: React.FC<ChallengeScreenProps> = ({ player, onBack, onBalanceUpdate, onRankUpdate }) => {
-    const [view, setView] = useState<ChallengeView>('lobby');
-    const [matchResult, setMatchResult] = useState<'win' | 'loss' | null>(null);
+const ChallengeScreen: React.FC<ChallengeScreenProps> = ({ player, gameMode, onBack, onBalanceUpdate, onRankUpdate, setPlayer }) => {
+    const [view, setView] = useState<ChallengeView>('finding_match');
 
-    const handleFindMatch = () => {
-        setView('finding_match');
-        // Simulate finding a match
-        setTimeout(() => {
-            // Simulate a random match result
-            const result = Math.random() > 0.5 ? 'win' : 'loss';
-            setMatchResult(result);
+    // Simulate finding a match
+    useState(() => {
+        const timer = setTimeout(() => {
             setView('in_match');
         }, 3000);
-    };
+        return () => clearTimeout(timer);
+    });
 
-    const handleMatchEnd = (result: 'win' | 'loss', goldChange: number, rankPointsChange: number, playerHeroId: string, opponentHeroId: string) => {
-        const newGold = player.gold + goldChange;
-        onBalanceUpdate(newGold);
+    const handleMatchEnd = (result: 'VICTORY' | 'DEFEAT', goldChange: number, rankPointsChange: number, playerCharacterId: string, placement: number, kills: number) => {
         
-        const newRankPoints = Math.max(0, player.rankPoints + rankPointsChange);
-        // This logic should be more robust, but for a mock, it's fine
-        onRankUpdate(player.rank, newRankPoints);
+        setPlayer(p => {
+            if (!p) return null;
 
-        // Save match history
-        const matchHistoryRef = database.ref(`users/${player.uid}/matchHistory`).push();
-        const newMatch: Omit<MatchHistory, 'id'> = {
-            opponentName: "Bot Player",
-            result,
-            rankPointsChange,
-            timestamp: Date.now(),
-            playerHeroId,
-            opponentHeroId,
-        };
-        matchHistoryRef.set(newMatch);
+            const newGold = p.gold + goldChange;
+            const newRankPoints = Math.max(0, p.rankPoints + rankPointsChange);
+            
+            // Check for rank up/down
+            let currentRank = p.rank;
+            const rankConfig = RANKS[currentRank];
+            if (rankConfig.pointsToAdvance !== null && newRankPoints >= rankConfig.pointsToAdvance) {
+                const rankKeys = Object.keys(RANKS) as Rank[];
+                const currentRankIndex = rankKeys.indexOf(currentRank);
+                if (currentRankIndex < rankKeys.length - 1) {
+                    currentRank = rankKeys[currentRankIndex + 1];
+                }
+            }
+            onRankUpdate(currentRank, newRankPoints);
 
-        // Reset for next match
+            // Save match history
+            const matchHistoryRef = database.ref(`users/${p.uid}/matchHistory`).push();
+            const newMatch: Omit<MatchHistory, 'id'> = {
+                placement,
+                kills,
+                result,
+                rankPointsChange,
+                timestamp: Date.now(),
+                playerCharacterId,
+                mode: gameMode,
+            };
+            matchHistoryRef.set(newMatch);
+
+            return {
+                ...p,
+                gold: newGold,
+                rank: currentRank,
+                rankPoints: newRankPoints
+            };
+        });
+        
+        // Go back to lobby after showing result
         setTimeout(() => {
-            setMatchResult(null);
-            setView('lobby');
+            onBack();
         }, 4000); // show result screen for 4s
     };
 
     const renderContent = () => {
         switch (view) {
+            case 'in_match':
+                if (gameMode === 'cs') {
+                    return <ClashSquadMatch player={player} onMatchEnd={handleMatchEnd} />;
+                }
+                return <ChallengeMatch player={player} onMatchEnd={handleMatchEnd} />;
+            case 'history':
+                return <ChallengeHistory playerId={player.uid} onBack={onBack} />;
             case 'finding_match':
-                return (
+            default:
+                 return (
                     <div className="text-center flex flex-col items-center justify-center h-full">
                         <Spinner />
-                        <h2 className="text-2xl text-yellow-300 mt-4 animate-pulse">Finding Opponent...</h2>
+                        <h2 className="text-2xl text-orange-300 mt-4 animate-pulse">
+                             {gameMode === 'cs' ? 'Assembling Teams...' : 'Entering Battleground...'}
+                        </h2>
+                        <button onClick={onBack} className="mt-8 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg">Cancel</button>
                     </div>
                 );
-            case 'in_match':
-                return <ChallengeMatch player={player} opponent={null} result={matchResult!} onMatchEnd={handleMatchEnd} />;
-            case 'history':
-                return <ChallengeHistory playerId={player.uid} onBack={() => setView('lobby')} />;
-            case 'lobby':
-            default:
-                return <ChallengeLobby player={player} onFindMatch={handleFindMatch} onShowHistory={() => setView('history')} onBack={onBack} />;
         }
     };
 
     return (
-        <div className="w-full h-full flex flex-col items-center justify-center animate-fade-in">
+        <div className="w-full h-full flex flex-col items-center justify-center animate-fade-in bg-black/70">
             {renderContent()}
         </div>
     );

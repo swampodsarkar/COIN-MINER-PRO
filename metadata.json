@@ -1,5 +1,7 @@
 {
-  "name": "Battle Legends: Nexus Siege",
-  "description": "A 1v1 fast-paced MOBA where legendary heroes battle for control of the lane. Destroy the enemy Nexus to achieve victory, climb the ranks, and become a legend.",
-  "requestFramePermissions": []
+  "name": "Battle Royale: Survival Grounds",
+  "description": "A fast-paced battle royale game. Drop in, loot up, and be the last one standing. Inspired by Garena Free Fire.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }

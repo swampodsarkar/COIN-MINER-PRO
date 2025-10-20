@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Modal from '../ui/Modal';
 
@@ -33,14 +34,14 @@ const DailyRewardModal: React.FC<DailyRewardModalProps> = ({ loginStreak, onClai
         const cardClasses = `
             relative flex flex-col items-center justify-center p-2 rounded-lg border-2 text-center
             transition-all duration-300
-            ${isToday ? 'bg-yellow-500/20 border-yellow-400 scale-110 shadow-lg shadow-yellow-500/20' : 'bg-gray-700 border-gray-600'}
+            ${isToday ? 'bg-orange-500/20 border-orange-400 scale-110 shadow-lg shadow-orange-500/20' : 'bg-gray-700 border-gray-600'}
             ${isClaimed ? 'opacity-50' : ''}
         `;
 
         return (
             <div className={cardClasses}>
                 {isClaimed && <div className="absolute top-1 right-1 text-2xl">✅</div>}
-                <p className={`font-bold ${isToday ? 'text-yellow-300' : 'text-gray-400'}`}>Day {day}</p>
+                <p className={`font-bold ${isToday ? 'text-orange-300' : 'text-gray-400'}`}>Day {day}</p>
                 <span className="text-4xl my-2">{reward.emoji}</span>
                 <p className="text-sm font-semibold text-white">
                     {reward.value.toLocaleString()}
@@ -52,8 +53,8 @@ const DailyRewardModal: React.FC<DailyRewardModalProps> = ({ loginStreak, onClai
     return (
         <Modal title="Daily Login Bonus" onClose={onClose}>
             <div className="text-center p-2 sm:p-4">
-                <h2 className="text-2xl text-yellow-300 mb-2">Welcome Back, Legend!</h2>
-                <p className="text-gray-300 mb-6">Claim your reward for logging in today. Keep the streak going for a special prize on Day 7!</p>
+                <h2 className="text-2xl text-orange-300 mb-2">Welcome Back, Survivor!</h2>
+                <p className="text-gray-300 mb-6">Claim your reward for logging in. Keep the streak going for a special prize on Day 7!</p>
                 
                 <div className="grid grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-4 mb-8">
                     {DAILY_REWARDS.map((reward, index) => (
@@ -69,7 +70,7 @@ const DailyRewardModal: React.FC<DailyRewardModalProps> = ({ loginStreak, onClai
 
                 <button
                     onClick={handleClaim}
-                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-4 rounded-lg border-2 border-yellow-700 shadow-lg transform hover:-translate-y-1 hover:brightness-110"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 px-4 rounded-lg border-2 border-orange-700 shadow-lg transform hover:-translate-y-1 hover:brightness-110"
                 >
                     Claim Day {currentDayIndex + 1} Reward
                 </button>

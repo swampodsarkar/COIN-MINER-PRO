@@ -1,10 +1,4 @@
-// FIX: Added type definitions for the application.
-export type Rank = 'Warrior' | 'Elite' | 'Master' | 'Grandmaster' | 'Epic' | 'Legend' | 'Mythic';
-
-export interface Emblem {
-    level: number;
-    xp: number;
-}
+export type Rank = 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | 'Diamond' | 'Heroic' | 'Grandmaster';
 
 export interface MembershipInfo {
     type: 'weekly' | 'monthly';
@@ -13,20 +7,40 @@ export interface MembershipInfo {
     lastClaimedDailyDiamonds: string; // ISO date string YYYY-MM-DD
 }
 
-export interface Player {
+export interface Pet {
+    id: string;
+    name: string;
+    emoji: string;
+    cost: {
+        gold: number;
+        diamonds: number;
+    };
+    abilityName: string;
+    abilityDescription: string;
+}
+
+export interface ClanMember {
     uid: string;
+    username: string;
+    rank: Rank;
+}
+
+export interface Clan {
+    id: string;
+    name: string;
+    tag: string;
+    leaderUid: string;
+    members: Record<string, ClanMember>; // key is player uid
+}
+
+export interface Player {
+    uid:string;
     username: string;
     email: string;
     gold: number;
     diamonds: number;
-    ownedHeroes: string[];
+    ownedCharacters: string[];
     avatar: string; // Player's unique emoji avatar
-    emblems: {
-        physical: Emblem;
-        magical: Emblem;
-        tank: Emblem;
-    };
-    equippedEmblem: 'physical' | 'magical' | 'tank';
     banned: boolean;
     lastLogin: string; // ISO date string YYYY-MM-DD
     dailyRewardClaimed: boolean;
@@ -34,6 +48,9 @@ export interface Player {
     rank: Rank;
     rankPoints: number;
     activeMembership: MembershipInfo | null;
+    ownedPets: string[];
+    equippedPet: string | null;
+    clanId?: string;
 }
 
 export interface SystemData {
@@ -57,23 +74,47 @@ export interface Notification {
     timestamp: number;
 }
 
-export interface Hero {
+export interface Character {
     id: string;
     name: string;
-    role: 'Fighter' | 'Mage' | 'Marksman' | 'Tank' | 'Assassin';
+    role: 'Rusher' | 'Support' | 'Sniper' | 'Scout';
     emoji: string;
     cost: {
         gold: number;
         diamonds: number;
     };
+    abilityName: string;
+    abilityDescription: string;
 }
 
 export interface MatchHistory {
     id: string;
-    opponentName: string;
-    result: 'win' | 'loss';
+    placement: number;
+    kills: number;
+    result: 'VICTORY' | 'DEFEAT';
     rankPointsChange: number;
     timestamp: number;
-    playerHeroId: string;
-    opponentHeroId: string;
+    playerCharacterId: string;
+    mode?: 'br' | 'cs';
+}
+
+export interface Weapon {
+    id: string;
+    name: string;
+    tier: number;
+    emoji: string;
+}
+
+export interface Armor {
+    id: string;
+    name: string;
+    tier: number;
+    emoji: string;
+}
+
+export interface Helmet {
+    id: string;
+    name: string;
+    tier: number;
+    emoji: string;
 }

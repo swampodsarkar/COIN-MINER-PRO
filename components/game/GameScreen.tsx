@@ -1,22 +1,24 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { database } from '../../services/firebase';
-import { Player, SystemData, Rank, MembershipInfo } from '../../types';
+import { Player, SystemData, Rank, Character, Clan } from '../../types';
 import { INITIAL_PLAYER_STATE, AVATAR_EMOJIS } from '../../constants';
 import LeaderboardModal from './LeaderboardModal';
 import DailyRewardModal from './DailyRewardModal';
 import EventAnnouncer from './EventAnnouncer';
 import ChallengeScreen from '../challenge/ChallengeScreen';
-import { auth } from '../../services/firebase';
 import HeroStore from './HeroStore';
 import SettingsModal from './SettingsModal';
 import TopUpModal from './TopUpModal';
 import HomeScreen from './HomeScreen';
 import BottomNavBar from './BottomNavBar';
-import PrepScreen from './PrepScreen';
-import EsportsScreen from './EsportsScreen';
+import EventsScreen from './EsportsScreen';
+import LuckRoyale from './LuckRoyale';
+import PetStore from './PetStore';
+import ClanScreen from './ClanScreen';
+import { PETS } from '../../gameConfig';
 
-export type GameView = 'home' | 'heroes' | 'prep' | 'esports' | 'leaderboard';
+export type GameView = 'home' | 'character' | 'luck_royale' | 'events' | 'leaderboard' | 'pet' | 'clan';
 
 const daysBetween = (dateStr1: string, dateStr2: string): number => {
     const d1 = new Date(dateStr1);
@@ -29,6 +31,7 @@ const daysBetween = (dateStr1: string, dateStr2: string): number => {
 const GameScreen: React.FC = () => {
     const { user } = useAuth();
     const [player, setPlayer] = useState<Player | null>(null);
+    const [playerClan, setPlayerClan] = useState<Clan | null>(null);
     const [system, setSystem] = useState<SystemData | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeView, setActiveView] = useState<GameView>('home');
@@ -36,6 +39,7 @@ const GameScreen: React.FC = () => {
     const [showSettings, setShowSettings] = useState(false);
     const [showTopUpModal, setShowTopUpModal] = useState(false);
     const [showChallengeScreen, setShowChallengeScreen] = useState(false);
+    const [selectedGameMode, setSelectedGameMode] = useState<'br' | 'cs'>('br');
 
     const playerRef = useRef(player);
     playerRef.current = player;
@@ -43,71 +47,93 @@ const GameScreen: React.FC = () => {
     const initializePlayer = useCallback(async () => {
         if (!user) return;
         const playerDbRef = database.ref(`users/${user.uid}`);
-        const snapshot = await playerDbRef.get();
-        if (snapshot.exists()) {
-            const dbData = snapshot.val();
-            let playerData: Player = {
-                ...INITIAL_PLAYER_STATE,
-                ...dbData,
-                uid: user.uid,
-                username: dbData.username || user.displayName || user.email?.split('@')[0] || 'Player',
-                email: user.email || '',
-                gold: dbData.gold ?? INITIAL_PLAYER_STATE.gold,
-                diamonds: dbData.diamonds ?? INITIAL_PLAYER_STATE.diamonds,
-                rank: dbData.rank || INITIAL_PLAYER_STATE.rank,
-                ownedHeroes: dbData.ownedHeroes || [...INITIAL_PLAYER_STATE.ownedHeroes],
-                avatar: dbData.avatar || AVATAR_EMOJIS[Math.floor(Math.random() * AVATAR_EMOJIS.length)],
-                equippedEmblem: dbData.equippedEmblem || 'physical',
-            };
-    
-            const todayISO = new Date().toISOString();
-            const today = todayISO.split('T')[0];
-            const daysDiff = daysBetween(playerData.lastLogin, today);
-    
-            if (daysDiff > 0) {
-                let updates: Partial<Player> = { lastLogin: today, dailyRewardClaimed: false };
-                if (daysDiff > 1) { updates.loginStreak = 0; }
-                if (!dbData.avatar) { updates.avatar = playerData.avatar; }
-                await playerDbRef.update(updates);
-                playerData = { ...playerData, ...updates };
-            }
-    
-            if (playerData.activeMembership) {
-                const now = Date.now();
-                if (playerData.activeMembership.expiresAt < now) {
-                    playerData.activeMembership = null;
-                } else {
-                    const lastClaimedDate = new Date(playerData.activeMembership.lastClaimedDailyDiamonds);
-                    if (lastClaimedDate < new Date(today)) {
-                        const diamondsPerDay = playerData.activeMembership.type === 'weekly' ? 50 : 80;
-                        playerData.diamonds += diamondsPerDay;
-                        playerData.activeMembership.lastClaimedDailyDiamonds = today;
+        playerDbRef.on('value', async (snapshot) => {
+            if (snapshot.exists()) {
+                const dbData = snapshot.val();
+                let playerData: Player = {
+                    ...INITIAL_PLAYER_STATE,
+                    ...dbData,
+                    uid: user.uid,
+                    username: dbData.username || user.displayName || user.email?.split('@')[0] || 'Player',
+                    email: user.email || '',
+                    gold: dbData.gold ?? INITIAL_PLAYER_STATE.gold,
+                    diamonds: dbData.diamonds ?? INITIAL_PLAYER_STATE.diamonds,
+                    rank: dbData.rank || INITIAL_PLAYER_STATE.rank,
+                    ownedCharacters: dbData.ownedCharacters || [...INITIAL_PLAYER_STATE.ownedCharacters],
+                    avatar: dbData.avatar || AVATAR_EMOJIS[Math.floor(Math.random() * AVATAR_EMOJIS.length)],
+                    ownedPets: dbData.ownedPets || [],
+                    equippedPet: dbData.equippedPet || null,
+                };
+        
+                if (!player) { // Only run this logic on initial load
+                    const todayISO = new Date().toISOString();
+                    const today = todayISO.split('T')[0];
+                    const daysDiff = daysBetween(playerData.lastLogin, today);
+            
+                    if (daysDiff > 0) {
+                        let updates: Partial<Player> = { lastLogin: today, dailyRewardClaimed: false };
+                        if (daysDiff > 1) { updates.loginStreak = 0; }
+                        if (!dbData.avatar) { updates.avatar = playerData.avatar; }
+                        await playerDbRef.update(updates);
+                        playerData = { ...playerData, ...updates };
                     }
+            
+                    if (playerData.activeMembership) {
+                        const now = Date.now();
+                        if (playerData.activeMembership.expiresAt < now) {
+                            playerData.activeMembership = null;
+                        } else {
+                            const lastClaimedDate = new Date(playerData.activeMembership.lastClaimedDailyDiamonds);
+                            if (lastClaimedDate < new Date(today)) {
+                                const diamondsPerDay = playerData.activeMembership.type === 'weekly' ? 50 : 80;
+                                playerData.diamonds += diamondsPerDay;
+                                playerData.activeMembership.lastClaimedDailyDiamonds = today;
+                            }
+                        }
+                    }
+                    if (!playerData.dailyRewardClaimed) setShowDailyReward(true);
                 }
+                setPlayer(playerData);
+
+            } else {
+                const newPlayer: Player = {
+                    ...INITIAL_PLAYER_STATE,
+                    uid: user.uid,
+                    username: user.displayName || user.email?.split('@')[0] || 'Player',
+                    email: user.email || '',
+                    avatar: AVATAR_EMOJIS[Math.floor(Math.random() * AVATAR_EMOJIS.length)],
+                };
+                await playerDbRef.set(newPlayer);
+                setPlayer(newPlayer);
+                setShowDailyReward(true);
             }
-            if (!playerData.dailyRewardClaimed) setShowDailyReward(true);
-            setPlayer(playerData);
-        } else {
-            const newPlayer: Player = {
-                ...INITIAL_PLAYER_STATE,
-                uid: user.uid,
-                username: user.displayName || user.email?.split('@')[0] || 'Player',
-                email: user.email || '',
-                avatar: AVATAR_EMOJIS[Math.floor(Math.random() * AVATAR_EMOJIS.length)],
-            };
-            await playerDbRef.set(newPlayer);
-            setPlayer(newPlayer);
-            setShowDailyReward(true);
-        }
-        setLoading(false);
-    }, [user]);
+            setLoading(false);
+        });
+
+        return () => playerDbRef.off();
+    }, [user, player]);
 
     useEffect(() => {
-        initializePlayer();
+        const unsubscribe = initializePlayer();
         const systemRef = database.ref('system');
         systemRef.on('value', snapshot => setSystem(snapshot.val()));
-        return () => systemRef.off();
+        return () => {
+            unsubscribe.then(off => off && off());
+            systemRef.off();
+        }
     }, [initializePlayer]);
+
+    useEffect(() => {
+        if (player?.clanId) {
+            const clanRef = database.ref(`clans/${player.clanId}`);
+            clanRef.on('value', (snapshot) => {
+                setPlayerClan(snapshot.val());
+            });
+            return () => clanRef.off();
+        } else {
+            setPlayerClan(null);
+        }
+    }, [player?.clanId]);
 
     const saveData = useCallback(() => {
         if (playerRef.current && user) {
@@ -148,69 +174,87 @@ const GameScreen: React.FC = () => {
         setPlayer(p => p ? {...p, rank: newRank, rankPoints: newRankPoints } : null);
     };
 
-    const handleBuyHero = (hero: { id: string, cost: { gold: number, diamonds: number }}) => {
+    const handleBuyCharacter = (character: Character) => {
          setPlayer(p => {
-            if (!p || (p.gold < hero.cost.gold && p.diamonds < hero.cost.diamonds)) return p;
+            if (!p || (p.gold < character.cost.gold && p.diamonds < character.cost.diamonds)) return p;
             
-            const costInGold = hero.cost.gold > 0;
+            const costInGold = character.cost.gold > 0;
 
             return {
                 ...p,
-                gold: costInGold ? p.gold - hero.cost.gold : p.gold,
-                diamonds: !costInGold ? p.diamonds - hero.cost.diamonds : p.diamonds,
-                ownedHeroes: [...p.ownedHeroes, hero.id]
+                gold: costInGold ? p.gold - character.cost.gold : p.gold,
+                diamonds: !costInGold ? p.diamonds - character.cost.diamonds : p.diamonds,
+                ownedCharacters: [...p.ownedCharacters, character.id]
             };
         });
     }
+    
+    const handlePlay = (mode: 'br' | 'cs') => {
+        setSelectedGameMode(mode);
+        setShowChallengeScreen(true);
+    };
 
     const renderView = () => {
         if (showChallengeScreen) {
              return <ChallengeScreen 
                 player={player!} 
+                gameMode={selectedGameMode}
                 onBack={() => setShowChallengeScreen(false)} 
                 onBalanceUpdate={(newGold) => setPlayer(p => p ? {...p, gold: newGold} : null)} 
                 onRankUpdate={handleRankUpdate} 
+                setPlayer={setPlayer}
             />;
         }
         switch(activeView) {
-            case 'heroes':
-                return <HeroStore player={player!} onBuyHero={handleBuyHero} />;
+            case 'character':
+                return <HeroStore player={player!} onBuyHero={handleBuyCharacter} />;
             case 'leaderboard':
                 return <LeaderboardModal onBack={() => setActiveView('home')} />;
-            case 'prep':
-                return <PrepScreen player={player!} setPlayer={setPlayer} />;
-            case 'esports':
-                return <EsportsScreen />;
+            case 'luck_royale':
+                return <LuckRoyale player={player!} setPlayer={setPlayer} />;
+            case 'pet':
+                return <PetStore player={player!} setPlayer={setPlayer} />;
+            case 'clan':
+                return <ClanScreen player={player!} setPlayer={setPlayer} />;
+            case 'events':
+                return <EventsScreen />;
             case 'home':
             default:
-                return <HomeScreen player={player!} onPlay={() => setShowChallengeScreen(true)} />;
+                return <HomeScreen player={player!} onPlay={handlePlay} />;
         }
     };
 
     if (loading || !player) {
-        return <div className="flex items-center justify-center h-screen"><span className="text-2xl">Entering the Battlefield...</span></div>;
+        return <div className="flex items-center justify-center h-screen"><span className="text-2xl">Entering the Battlegrounds...</span></div>;
     }
 
     return (
         <div 
             className="relative h-full w-full flex flex-col items-center justify-center overflow-hidden bg-cover bg-center" 
-            style={{backgroundImage: `url('https://firebasestorage.googleapis.com/v0/b/gen-z-airdrop.appspot.com/o/backgrounds%2Flobby_bg.jpg?alt=media&token=85a1197a-9cb2-474c-8197-231a6136e09e')`}}
+            style={{backgroundImage: `url('https://firebasestorage.googleapis.com/v0/b/gen-z-airdrop.appspot.com/o/backgrounds%2Ffreefire_bg.jpg?alt=media&token=c15a7b67-41a9-4566-993d-4c803a647657')`}}
         >
-             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+             <div className="absolute inset-0 bg-black/50"></div>
              {showDailyReward && !player.dailyRewardClaimed && <DailyRewardModal loginStreak={player.loginStreak} onClaim={handleClaimDailyReward} onClose={() => setShowDailyReward(false)} />}
              {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
-             {showTopUpModal && <TopUpModal player={player} onClose={() => setShowTopUpModal(false)} onBuyGems={(amount) => setPlayer(p => p ? { ...p, diamonds: p.diamonds + amount } : null)} onBuyMembership={(type, days) => { /* logic */ }} />}
+             {showTopUpModal && <TopUpModal player={player} setPlayer={setPlayer} onClose={() => setShowTopUpModal(false)} />}
 
              <EventAnnouncer system={system} />
 
              <header className="absolute top-0 left-0 right-0 w-full flex justify-between items-center bg-black bg-opacity-30 p-2 sm:p-3 z-20">
                  <div className="flex items-center space-x-2">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-yellow-400 bg-gray-800 flex items-center justify-center text-3xl">
-                        {player.avatar}
+                    <div className="relative">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-orange-400 bg-gray-800 flex items-center justify-center text-3xl">
+                            {player.avatar}
+                        </div>
+                        {player.equippedPet && PETS[player.equippedPet] && (
+                            <div className="absolute -bottom-2 -right-2 text-2xl bg-gray-700 rounded-full p-0.5 border-2 border-green-400">
+                                {PETS[player.equippedPet].emoji}
+                            </div>
+                        )}
                     </div>
                     <div>
-                        <p className="text-white text-sm sm:text-lg font-bold">{player.username}</p>
-                        <p className="text-yellow-300 text-xs sm:text-sm">{player.rank} {player.rankPoints} RP</p>
+                        <p className="text-white text-sm sm:text-lg font-bold">{playerClan ? `[${playerClan.tag}] ` : ''}{player.username}</p>
+                        <p className="text-orange-300 text-xs sm:text-sm">{player.rank} {player.rankPoints} RP</p>
                     </div>
                  </div>
                  <div className="flex items-center space-x-2 sm:space-x-4">
