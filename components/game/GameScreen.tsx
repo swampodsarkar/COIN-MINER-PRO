@@ -13,7 +13,8 @@ import Store from './Store';
 import HeroStore from './HeroStore';
 import LuckRoyale from './LuckRoyale';
 import AutoMinerPanel from './AutoMinerPanel';
-import { AXES, HEROES, LUCK_ROYALE_COST, LUCK_ROYALE_GUARANTEED_SPINS, LUCK_ROYALE_REWARDS, Axe, AUTO_MINER_CONFIG, BASE_GEM_DROP_CHANCE } from '../../gameConfig';
+import UpgradePanel from './UpgradePanel';
+import { AXES, HEROES, LUCK_ROYALE_COST, LUCK_ROYALE_GUARANTEED_SPINS, LUCK_ROYALE_REWARDS, Axe, AUTO_MINER_CONFIG, BASE_GEM_DROP_CHANCE, PICKAXE_UPGRADE_CONFIG } from '../../gameConfig';
 
 type GameView = 'mine' | 'store' | 'luckRoyale' | 'leaderboard' | 'challenge' | 'heroes';
 
@@ -83,6 +84,7 @@ const GameScreen: React.FC = () => {
             if (!playerData.inventory.heroes) playerData.inventory.heroes = [];
             if (playerData.equipment.equippedHero === undefined) playerData.equipment.equippedHero = null;
             if (playerData.autoMinerLevel === undefined) playerData.autoMinerLevel = 0;
+            if (playerData.miningPowerLevel === undefined) playerData.miningPowerLevel = 0;
             if (playerData.rank === undefined) {
                 playerData.rank = 'Bronze';
                 playerData.rankPoints = 0;
@@ -199,6 +201,21 @@ const GameScreen: React.FC = () => {
                     ...p,
                     gold: p.gold - cost,
                     autoMinerLevel: p.autoMinerLevel + 1,
+                };
+            }
+            return p;
+        });
+    };
+
+    const handleUpgradePickaxe = () => {
+        setPlayer(p => {
+            if (!p) return null;
+            const cost = PICKAXE_UPGRADE_CONFIG.baseCost * Math.pow(PICKAXE_UPGRADE_CONFIG.costMultiplier, p.miningPowerLevel);
+            if (p.gold >= cost) {
+                return {
+                    ...p,
+                    gold: p.gold - cost,
+                    miningPowerLevel: p.miningPowerLevel + 1,
                 };
             }
             return p;
@@ -378,22 +395,36 @@ const GameScreen: React.FC = () => {
             case 'mine':
             default:
                 const axePower = AXES[player!.equipment.equippedAxe]?.power || 1;
+                const pickaxeUpgradePower = (player!.miningPowerLevel || 0) * PICKAXE_UPGRADE_CONFIG.powerPerLevel;
                 const heroMultiplier = player!.equipment.equippedHero ? HEROES[player!.equipment.equippedHero]?.powerMultiplier || 1 : 1;
-                const effectiveMiningPower = axePower * heroMultiplier;
+                const effectiveMiningPower = (axePower + pickaxeUpgradePower) * heroMultiplier;
 
                 const autoMinerLevel = player!.autoMinerLevel || 0;
                 const autoMinerUpgradeCost = AUTO_MINER_CONFIG.baseCost * Math.pow(AUTO_MINER_CONFIG.costMultiplier, autoMinerLevel);
                 const goldPerSecond = autoMinerLevel * AUTO_MINER_CONFIG.baseGoldPerSecond;
+
+                const pickaxeLevel = player!.miningPowerLevel || 0;
+                const pickaxeUpgradeCost = PICKAXE_UPGRADE_CONFIG.baseCost * Math.pow(PICKAXE_UPGRADE_CONFIG.costMultiplier, pickaxeLevel);
+
                 return (
                     <>
                         <Miner player={player!} onMine={handleMine} system={system} effectiveMiningPower={effectiveMiningPower}/>
-                        <AutoMinerPanel 
-                            level={autoMinerLevel}
-                            goldPerSecond={goldPerSecond}
-                            upgradeCost={autoMinerUpgradeCost}
-                            playerGold={player!.gold}
-                            onUpgrade={handleUpgradeAutoMiner}
-                        />
+                        <div className="flex flex-row gap-2 sm:gap-4 w-full max-w-sm sm:max-w-md px-4 mt-2">
+                            <AutoMinerPanel 
+                                level={autoMinerLevel}
+                                goldPerSecond={goldPerSecond}
+                                upgradeCost={autoMinerUpgradeCost}
+                                playerGold={player!.gold}
+                                onUpgrade={handleUpgradeAutoMiner}
+                            />
+                             <UpgradePanel 
+                                level={pickaxeLevel}
+                                currentPower={axePower + pickaxeUpgradePower}
+                                upgradeCost={pickaxeUpgradeCost}
+                                playerGold={player!.gold}
+                                onUpgrade={handleUpgradePickaxe}
+                            />
+                        </div>
                         <div className="flex items-center justify-center flex-wrap gap-2 sm:gap-4 mt-4">
                              <button 
                                 onClick={() => setActiveView('store')}

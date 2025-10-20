@@ -16,6 +16,7 @@ export interface Player {
     };
     luckRoyaleSpins: number;
     autoMinerLevel: number;
+    miningPowerLevel: number;
     banned: boolean;
     lastLogin: string; // ISO string
     dailyRewardClaimed: boolean;

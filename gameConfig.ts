@@ -91,6 +91,12 @@ export const AUTO_MINER_CONFIG = {
     baseGoldPerSecond: 0.1,
 };
 
+export const PICKAXE_UPGRADE_CONFIG = {
+    baseCost: 25,
+    costMultiplier: 1.4,
+    powerPerLevel: 0.5,
+};
+
 export const BASE_GEM_DROP_CHANCE = 0.005; // 0.5% base chance
 
 export const LUCK_ROYALE_COST = 50;
