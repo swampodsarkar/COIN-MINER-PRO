@@ -1,52 +1,77 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import Modal from '../ui/Modal';
 
+type Reward = { type: 'gold' | 'axe'; value: number | string, emoji: string };
+
+const DAILY_REWARDS: Reward[] = [
+    { type: 'gold', value: 50, emoji: '💰' },
+    { type: 'gold', value: 75, emoji: '💰' },
+    { type: 'gold', value: 100, emoji: '💰' },
+    { type: 'gold', value: 125, emoji: '💰' },
+    { type: 'gold', value: 150, emoji: '💰' },
+    { type: 'gold', value: 200, emoji: '💰' },
+    { type: 'axe', value: 'Rare Axe', emoji: '🎁' }
+];
+
 interface DailyRewardModalProps {
-    onClaim: (gems: number) => void;
     loginStreak: number;
+    onClaim: (reward: { type: 'gold' | 'axe'; value: number | string }) => void;
+    onClose: () => void;
 }
 
-const DailyRewardModal: React.FC<DailyRewardModalProps> = ({ onClaim, loginStreak }) => {
-    const [claimed, setClaimed] = useState(false);
-    
-    const baseReward = 5;
-    const streakBonus = 2;
-    const rewardAmount = useMemo(() => baseReward + ((loginStreak - 1) * streakBonus), [loginStreak]);
 
+const DailyRewardModal: React.FC<DailyRewardModalProps> = ({ loginStreak, onClaim, onClose }) => {
+    
+    const currentDayIndex = loginStreak; // Streak 0 is Day 1, so index is 0
+    const rewardToClaim = DAILY_REWARDS[currentDayIndex];
 
     const handleClaim = () => {
-        onClaim(rewardAmount);
-        setClaimed(true);
+        onClaim(rewardToClaim);
+    };
+
+    const RewardCard: React.FC<{ day: number; reward: Reward; isClaimed: boolean; isToday: boolean }> = ({ day, reward, isClaimed, isToday }) => {
+        const cardClasses = `
+            relative flex flex-col items-center justify-center p-2 rounded-lg border-2 text-center
+            transition-all duration-300
+            ${isToday ? 'bg-yellow-500/20 border-yellow-400 scale-110 shadow-lg shadow-yellow-500/20' : 'bg-gray-700 border-gray-600'}
+            ${isClaimed ? 'opacity-50' : ''}
+        `;
+
+        return (
+            <div className={cardClasses}>
+                {isClaimed && <div className="absolute top-1 right-1 text-2xl">✅</div>}
+                <p className={`font-bold ${isToday ? 'text-yellow-300' : 'text-gray-400'}`}>Day {day}</p>
+                <span className="text-4xl my-2">{reward.emoji}</span>
+                <p className="text-sm font-semibold text-white">
+                    {reward.type === 'gold' ? `${reward.value}` : reward.value}
+                </p>
+            </div>
+        );
     };
 
     return (
-        <Modal title="Daily Reward!" onClose={() => { if(claimed) onClaim(0)}}>
-            <div className="text-center p-4">
-                <h2 className="text-2xl text-yellow-300 mb-2">Welcome Back, Miner!</h2>
+        <Modal title="Daily Login Bonus" onClose={onClose}>
+            <div className="text-center p-2 sm:p-4">
+                <h2 className="text-2xl text-yellow-300 mb-2">Welcome Back!</h2>
+                <p className="text-gray-300 mb-6">Claim your reward for logging in today. Keep the streak going for a special prize on Day 7!</p>
                 
-                <div className="bg-gray-900/50 rounded-lg p-3 my-4 border border-yellow-700">
-                    <p className="text-yellow-400 text-lg flex items-center justify-center">
-                        <span className="text-2xl mr-2 animate-bounce">🔥</span>
-                        {loginStreak}-Day Login Streak!
-                    </p>
-                    {loginStreak > 1 && (
-                        <p className="text-gray-300 text-sm mt-1">
-                            Base: {baseReward}💎 + Streak Bonus: {(loginStreak - 1) * streakBonus}💎
-                        </p>
-                    )}
+                <div className="grid grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-4 mb-8">
+                    {DAILY_REWARDS.map((reward, index) => (
+                        <RewardCard 
+                            key={index}
+                            day={index + 1}
+                            reward={reward}
+                            isClaimed={index < currentDayIndex}
+                            isToday={index === currentDayIndex}
+                        />
+                    ))}
                 </div>
 
-                <p className="text-gray-300 mb-6">Keep the streak going for bigger bonuses!</p>
-                <div className="flex justify-center items-center text-4xl font-bold text-blue-400 mb-8">
-                    <span className="text-4xl mr-3">💎</span>
-                    <span>{rewardAmount}</span>
-                </div>
                 <button
                     onClick={handleClaim}
-                    disabled={claimed}
-                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-4 rounded-lg border-2 border-yellow-700 shadow-lg disabled:bg-gray-600 disabled:cursor-not-allowed disabled:text-gray-400 transform hover:-translate-y-1 hover:brightness-110 disabled:transform-none"
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-4 rounded-lg border-2 border-yellow-700 shadow-lg transform hover:-translate-y-1 hover:brightness-110"
                 >
-                    {claimed ? 'Claimed!' : 'Claim Reward'}
+                    Claim Day {currentDayIndex + 1} Reward
                 </button>
             </div>
         </Modal>

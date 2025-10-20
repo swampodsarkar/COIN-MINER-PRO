@@ -74,37 +74,31 @@ const GameScreen: React.FC = () => {
             const today = new Date().toISOString().split('T')[0];
             
             // Migration for older players
+            if (playerData.loginStreak === undefined) playerData.loginStreak = 0;
             if (!playerData.equipment) {
-                playerData = {
-                    ...playerData,
-                    ...INITIAL_PLAYER_STATE,
-                    gold: playerData.gold,
-                    gems: playerData.gems,
-                }
+                playerData = { ...playerData, ...INITIAL_PLAYER_STATE, gold: playerData.gold, gems: playerData.gems };
             }
-            if (playerData.autoMinerLevel === undefined) {
-                playerData.autoMinerLevel = 0;
-            }
-
-
-            if (playerData.lastLogin !== today) {
-                const dayDifference = daysBetween(playerData.lastLogin, today);
-                
-                if (dayDifference === 1) {
-                    playerData.loginStreak = (playerData.loginStreak || 1) + 1;
-                } else if (dayDifference > 1) {
-                    playerData.loginStreak = 1;
+            if (playerData.autoMinerLevel === undefined) playerData.autoMinerLevel = 0;
+            
+            const daysDiff = daysBetween(playerData.lastLogin, today);
+    
+            if (daysDiff > 0) { // It's a new day
+                let updates: Partial<Player> = {
+                    lastLogin: today,
+                    dailyRewardClaimed: false,
+                };
+                if (daysDiff > 1) {
+                    // Missed a day, streak broken
+                    updates.loginStreak = 0;
                 }
-                
-                playerData.lastLogin = today;
-                playerData.dailyRewardClaimed = false;
+                await playerDbRef.update(updates);
+                playerData = { ...playerData, ...updates };
+            }
+    
+            if (!playerData.dailyRewardClaimed) {
                 setShowDailyReward(true);
             }
-
-            if (!playerData.loginStreak) {
-                playerData.loginStreak = 1;
-            }
-
+            
             setPlayer(playerData);
         } else {
             const newPlayer: Player = {
@@ -112,12 +106,10 @@ const GameScreen: React.FC = () => {
                 uid: user.uid,
                 username: user.displayName || user.email?.split('@')[0] || 'Miner',
                 email: user.email || '',
-                lastLogin: new Date().toISOString().split('T')[0],
-                dailyRewardClaimed: true,
-                loginStreak: 1,
             };
             await playerDbRef.set(newPlayer);
             setPlayer(newPlayer);
+            setShowDailyReward(true); // New players can claim right away
         }
         setLoading(false);
     }, [user]);
@@ -277,8 +269,47 @@ const GameScreen: React.FC = () => {
         }, 2000);
     };
     
-    const handleClaimDailyReward = (gems: number) => {
-        setPlayer(p => p ? { ...p, gems: p.gems + gems, dailyRewardClaimed: true } : null);
+    const handleClaimDailyReward = (reward: { type: 'gold' | 'axe'; value: number | string }) => {
+        setPlayer(p => {
+            if (!p) return null;
+            
+            const newStreak = (p.loginStreak % 7) + 1;
+            
+            let updatedGold = p.gold;
+            let updatedInventory = p.inventory;
+            let newAxes = [...p.inventory.axes];
+    
+            if (reward.type === 'gold') {
+                updatedGold += reward.value as number;
+            } else if (reward.type === 'axe') {
+                const rareAxes = Object.entries(AXES).filter(([, axe]) => axe.type === 'rare').map(([id]) => id);
+                const unownedRareAxes = rareAxes.filter(id => !p.inventory.axes.includes(id));
+                
+                if (unownedRareAxes.length > 0) {
+                     const prizeId = unownedRareAxes[Math.floor(Math.random() * unownedRareAxes.length)];
+                     if (!newAxes.includes(prizeId)) {
+                        newAxes.push(prizeId);
+                    }
+                    updatedInventory = { ...p.inventory, axes: newAxes };
+                } else {
+                    // If they own all rare axes, give them a gem bonus instead
+                     return {
+                         ...p,
+                         gems: p.gems + 250, // Generous bonus for dedicated players
+                         dailyRewardClaimed: true,
+                         loginStreak: newStreak
+                     }
+                }
+            }
+    
+            return { 
+                ...p, 
+                gold: updatedGold,
+                inventory: updatedInventory,
+                dailyRewardClaimed: true,
+                loginStreak: newStreak,
+            };
+        });
         setShowDailyReward(false);
     };
 
@@ -345,7 +376,7 @@ const GameScreen: React.FC = () => {
 
     return (
         <div className="relative h-full w-full flex flex-col items-center justify-between overflow-hidden">
-            {showDailyReward && !player.dailyRewardClaimed && <DailyRewardModal onClaim={handleClaimDailyReward} loginStreak={player.loginStreak} />}
+            {showDailyReward && !player.dailyRewardClaimed && <DailyRewardModal loginStreak={player.loginStreak} onClaim={handleClaimDailyReward} onClose={() => setShowDailyReward(false)} />}
 
             <EventAnnouncer system={system} />
 
