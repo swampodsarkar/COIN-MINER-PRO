@@ -11,8 +11,13 @@ export interface Axe {
 export interface Hero {
     id: string;
     name: string;
+    rarity: 'common' | 'rare' | 'legendary';
     cost: number; // in gems
     powerMultiplier: number;
+    secondaryBuff?: {
+        description: string;
+        gemDropChance?: number; // e.g. 0.02 for 2%
+    };
     emoji: string;
 }
 
@@ -31,20 +36,31 @@ export const AXES: Record<string, Omit<Axe, 'id'>> = {
 export const HEROES: Record<string, Omit<Hero, 'id'>> = {
     'dwarven_smith': { 
         name: 'Dwarven Smith', 
+        rarity: 'common',
         cost: 500, 
         powerMultiplier: 1.1, // 10% boost
         emoji: '🛠️' 
     },
     'rock_golem': { 
-        name: 'Rock Golem', 
+        name: 'Rock Golem',
+        rarity: 'rare',
         cost: 600, 
         powerMultiplier: 1.25, // 25% boost
+        secondaryBuff: {
+            description: "+2% Gem Drop Chance",
+            gemDropChance: 0.02
+        },
         emoji: '🗿' 
     },
     'crystal_king': { 
         name: 'Crystal King', 
+        rarity: 'legendary',
         cost: 999, 
         powerMultiplier: 1.5, // 50% boost
+        secondaryBuff: {
+            description: "+5% Gem Drop Chance",
+            gemDropChance: 0.05
+        },
         emoji: '👑' 
     },
 };
@@ -54,6 +70,8 @@ export const AUTO_MINER_CONFIG = {
     costMultiplier: 1.5,
     baseGoldPerSecond: 0.1,
 };
+
+export const BASE_GEM_DROP_CHANCE = 0.005; // 0.5% base chance
 
 export const LUCK_ROYALE_COST = 50;
 export const LUCK_ROYALE_GUARANTEED_SPINS = 50;

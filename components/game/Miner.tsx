@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Player, SystemData } from '../../types';
 import { AXES } from '../../gameConfig';
 import { playMineSound } from '../../assets/sounds';
@@ -10,11 +10,12 @@ interface MinerProps {
     effectiveMiningPower: number;
 }
 
-interface FloatingNumber {
+interface FloatingText {
     id: number;
     value: string;
     x: number;
     y: number;
+    color: string;
 }
 
 interface Particle {
@@ -25,10 +26,37 @@ interface Particle {
   size: number;
 }
 
+// Helper hook to get the previous value of a prop or state
+function usePrevious<T>(value: T): T | undefined {
+    const ref = useRef<T>();
+    useEffect(() => {
+        ref.current = value;
+    });
+    return ref.current;
+}
+
 const Miner: React.FC<MinerProps> = ({ player, onMine, system, effectiveMiningPower }) => {
     const [isMining, setIsMining] = useState(false);
-    const [floatingNumbers, setFloatingNumbers] = useState<FloatingNumber[]>([]);
+    const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
     const [particles, setParticles] = useState<Particle[]>([]);
+    const prevGems = usePrevious(player.gems);
+
+    useEffect(() => {
+        if (prevGems !== undefined && player.gems > prevGems) {
+            const gemsFound = player.gems - prevGems;
+            const newFloatingGem: FloatingText = {
+                id: Date.now() + Math.random(), // Add random to avoid collision with gold text
+                value: `+${gemsFound} 💎`,
+                x: 50 + Math.random() * 40 - 20,
+                y: 30 + Math.random() * 20 - 10, // Appear slightly higher than gold
+                color: 'text-blue-400',
+            };
+            setFloatingTexts(prev => [...prev, newFloatingGem]);
+            setTimeout(() => {
+                setFloatingTexts(prev => prev.filter(f => f.id !== newFloatingGem.id));
+            }, 1500);
+        }
+    }, [player.gems, prevGems]);
 
     const getPickaxeDetails = () => {
         const equippedAxe = AXES[player.equipment.equippedAxe];
@@ -52,14 +80,15 @@ const Miner: React.FC<MinerProps> = ({ player, onMine, system, effectiveMiningPo
         const goldGained = effectiveMiningPower * rushMultiplier;
         onMine(goldGained);
         
-        const newFloatingNumber: FloatingNumber = {
+        const newFloatingGold: FloatingText = {
             id: Date.now(),
-            value: `+${goldGained}`,
+            value: `+${goldGained.toFixed(1)}`,
             x: 50 + Math.random() * 40 - 20,
             y: 50 + Math.random() * 20 - 10,
+            color: 'text-yellow-300'
         };
 
-        setFloatingNumbers(prev => [...prev, newFloatingNumber]);
+        setFloatingTexts(prev => [...prev, newFloatingGold]);
 
         const particleCount = Math.min(10, Math.floor(effectiveMiningPower / 2) + 1);
         const newParticles: Particle[] = [];
@@ -83,7 +112,7 @@ const Miner: React.FC<MinerProps> = ({ player, onMine, system, effectiveMiningPo
         }, 300);
 
         setTimeout(() => {
-            setFloatingNumbers(prev => prev.filter(f => f.id !== newFloatingNumber.id));
+            setFloatingTexts(prev => prev.filter(f => f.id !== newFloatingGold.id));
         }, 1500);
     };
     
@@ -91,10 +120,10 @@ const Miner: React.FC<MinerProps> = ({ player, onMine, system, effectiveMiningPo
 
     return (
         <div className="relative flex flex-col items-center justify-center my-4">
-             {floatingNumbers.map(f => (
+             {floatingTexts.map(f => (
                 <span 
                     key={f.id} 
-                    className="absolute text-yellow-300 font-bold text-2xl pointer-events-none animate-float-up"
+                    className={`absolute ${f.color} font-bold text-2xl pointer-events-none animate-float-up`}
                     style={{ left: `${f.x}%`, top: `${f.y}%`, transform: 'translate(-50%, -50%)', zIndex: 10 }}
                 >
                     {f.value}

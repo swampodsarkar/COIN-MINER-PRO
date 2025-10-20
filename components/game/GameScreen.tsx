@@ -13,7 +13,7 @@ import Store from './Store';
 import HeroStore from './HeroStore';
 import LuckRoyale from './LuckRoyale';
 import AutoMinerPanel from './AutoMinerPanel';
-import { AXES, HEROES, LUCK_ROYALE_COST, LUCK_ROYALE_GUARANTEED_SPINS, LUCK_ROYALE_REWARDS, Axe, AUTO_MINER_CONFIG } from '../../gameConfig';
+import { AXES, HEROES, LUCK_ROYALE_COST, LUCK_ROYALE_GUARANTEED_SPINS, LUCK_ROYALE_REWARDS, Axe, AUTO_MINER_CONFIG, BASE_GEM_DROP_CHANCE } from '../../gameConfig';
 
 type GameView = 'mine' | 'store' | 'luckRoyale' | 'leaderboard' | 'challenge' | 'heroes';
 
@@ -169,7 +169,19 @@ const GameScreen: React.FC = () => {
     
 
     const handleMine = (amount: number) => {
-        setPlayer(p => p ? { ...p, gold: p.gold + amount } : null);
+        const hero = player!.equipment.equippedHero ? HEROES[player!.equipment.equippedHero] : null;
+        const gemDropChance = BASE_GEM_DROP_CHANCE + (hero?.secondaryBuff?.gemDropChance || 0);
+        const gemFound = Math.random() < gemDropChance;
+
+        setPlayer(p => {
+            if (!p) return null;
+            return {
+                ...p,
+                gold: p.gold + amount,
+                gems: p.gems + (gemFound ? 1 : 0),
+            };
+        });
+
         setScreenShake(true);
         setTimeout(() => setScreenShake(false), 300);
     };

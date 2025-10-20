@@ -30,11 +30,34 @@ const HeroStore: React.FC<HeroStoreProps> = ({ player, onBuyHero, onEquipHero, o
             }
         };
 
+        const rarityStyles = {
+            common: {
+                borderColor: 'border-gray-700',
+                textColor: 'text-gray-300',
+                shadow: ''
+            },
+            rare: {
+                borderColor: 'border-blue-500',
+                textColor: 'text-blue-400',
+                shadow: 'shadow-lg shadow-blue-500/20'
+            },
+            legendary: {
+                borderColor: 'border-purple-500',
+                textColor: 'text-purple-400',
+                shadow: 'shadow-lg shadow-purple-500/30'
+            },
+        };
+        const styles = rarityStyles[hero.rarity];
+
         return (
-            <div className="bg-gray-800 p-4 rounded-lg border-2 border-gray-700 flex flex-col text-center shadow-lg">
+            <div className={`bg-gray-800 p-4 rounded-lg border-2 flex flex-col text-center transition-all ${styles.borderColor} ${styles.shadow}`}>
                 <span className="text-5xl mb-2">{hero.emoji}</span>
-                <h4 className="text-yellow-400 text-lg mb-1">{hero.name}</h4>
-                <p className="text-gray-300 text-sm mb-3">Power: +{((hero.powerMultiplier - 1) * 100).toFixed(0)}%</p>
+                <h4 className={`text-lg mb-1 font-bold ${styles.textColor}`}>{hero.name}</h4>
+                <p className={`uppercase text-xs font-bold mb-1 ${styles.textColor}`}>{hero.rarity}</p>
+                <p className="text-gray-300 text-sm mb-2">Power: +{((hero.powerMultiplier - 1) * 100).toFixed(0)}%</p>
+                <p className="text-green-400 text-xs h-8 mb-2 flex items-center justify-center">
+                    {hero.secondaryBuff?.description || <>&nbsp;</>}
+                </p>
                 <div className="flex-grow"></div>
                 {ownsHero ? (
                     <button
