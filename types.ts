@@ -1,3 +1,5 @@
+export type Rank = 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | 'Diamond' | 'Heroic';
+
 export interface Player {
     uid: string;
     username: string;
@@ -19,6 +21,8 @@ export interface Player {
     dailyRewardClaimed: boolean;
     loginStreak: number;
     activeMatch?: string | null;
+    rank: Rank;
+    rankPoints: number;
 }
 
 export interface LeaderboardEntry {
@@ -54,14 +58,14 @@ export interface Notification {
 export interface ChallengeQueueEntry {
     uid: string;
     username: string;
-    betAmount: number;
+    rank: Rank;
     timestamp: number;
 }
 
 export interface ChallengeMatch {
     matchId: string;
     status: 'countdown' | 'inprogress' | 'finished' | 'cancelled';
-    betAmount: number;
+    goldAtStake: number;
     startTime: number;
     
     player1: {
@@ -81,7 +85,8 @@ export interface ChallengeMatch {
 
 export interface ChallengeHistoryEntry {
     opponentUsername: string;
-    betAmount: number;
+    goldChange: number;
     result: 'win' | 'loss' | 'draw';
     timestamp: number;
+    rankPointsChange: number;
 }

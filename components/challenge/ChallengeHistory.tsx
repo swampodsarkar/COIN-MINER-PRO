@@ -51,7 +51,14 @@ const ChallengeHistory: React.FC<ChallengeHistoryProps> = ({ playerUid, onBack }
                             <li key={index} className="flex items-center justify-between bg-gray-800 p-3 rounded-lg border border-gray-700 shadow-md">
                                 <div className="flex flex-col">
                                     <span className="text-white text-base">vs {entry.opponentUsername}</span>
-                                     <span className="text-yellow-400 text-sm">💰 {entry.betAmount.toLocaleString()}</span>
+                                    <div className="flex items-center space-x-4">
+                                        <span className={`text-sm ${entry.goldChange > 0 ? 'text-green-400' : entry.goldChange < 0 ? 'text-red-400' : 'text-gray-400'}`}>
+                                            💰 {entry.goldChange >= 0 ? '+' : ''}{entry.goldChange.toLocaleString()}
+                                        </span>
+                                        <span className={`text-xs font-semibold ${entry.rankPointsChange > 0 ? 'text-blue-400' : entry.rankPointsChange < 0 ? 'text-purple-400' : 'text-gray-400'}`}>
+                                            {entry.rankPointsChange >= 0 ? '+' : ''}{entry.rankPointsChange} RP
+                                        </span>
+                                    </div>
                                 </div>
                                 {getResultIndicator(entry.result)}
                             </li>

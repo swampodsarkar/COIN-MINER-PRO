@@ -22,4 +22,6 @@ export const INITIAL_PLAYER_STATE: Omit<Player, 'uid' | 'username' | 'email'> = 
     lastLogin: yesterday.toISOString().split('T')[0], // Set to yesterday for new players
     dailyRewardClaimed: false, // They can claim on first login
     loginStreak: 0,
+    rank: 'Bronze',
+    rankPoints: 0,
 };

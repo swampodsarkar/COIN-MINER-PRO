@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { database } from '../../services/firebase';
-import { Player, ChallengeMatch, ChallengeHistoryEntry } from '../../types';
+import { Player, ChallengeMatch, ChallengeHistoryEntry, Rank } from '../../types';
+import { RANKS, getRankFromRP } from '../../gameConfig';
 
 interface ChallengeMatchProps {
     player: Player;
     match: ChallengeMatch;
     onBalanceUpdate: (newGold: number) => void;
+    onRankUpdate: (newRank: Rank, newRankPoints: number) => void;
     onFinish: () => void;
 }
 
-const ChallengeMatchView: React.FC<ChallengeMatchProps> = ({ player, match, onBalanceUpdate, onFinish }) => {
+const ChallengeMatchView: React.FC<ChallengeMatchProps> = ({ player, match, onBalanceUpdate, onRankUpdate, onFinish }) => {
     const [timeLeft, setTimeLeft] = useState(15);
     const [countdown, setCountdown] = useState(3);
     const [isFinished, setIsFinished] = useState(false);
@@ -78,44 +80,66 @@ const ChallengeMatchView: React.FC<ChallengeMatchProps> = ({ player, match, onBa
 
     useEffect(() => {
         if (match.status === 'finished' && !isFinished) {
-            // Update balance
-            if (match.winner === player.uid) {
-                onBalanceUpdate(player.gold + match.betAmount);
-            } else if (match.winner !== 'draw' && match.winner !== undefined) {
-                onBalanceUpdate(player.gold - match.betAmount);
+            const isWinner = match.winner === player.uid;
+            const isDraw = match.winner === 'draw';
+
+            let goldChange = 0;
+            if (!isDraw) {
+                goldChange = isWinner ? match.goldAtStake : -match.goldAtStake;
             }
+            onBalanceUpdate(player.gold + goldChange);
 
-            // Write history for both players
-            const historyRefP1 = database.ref(`users/${match.player1.uid}/challengeHistory/${match.matchId}`);
-            const historyRefP2 = database.ref(`users/${match.player2.uid}/challengeHistory/${match.matchId}`);
-            
-            let resultP1: 'win' | 'loss' | 'draw' = 'draw';
-            if (match.winner === match.player1.uid) resultP1 = 'win';
-            else if (match.winner !== 'draw') resultP1 = 'loss';
+            // Client-side rank update for immediate feedback
+            const playerRankInfo = RANKS[player.rank];
+            const [rpWin, rpLoss] = playerRankInfo.rpChange;
+            let rpChange = 0;
+            if (!isDraw) {
+                rpChange = isWinner ? rpWin : rpLoss;
+            }
+            const newRankPoints = Math.max(0, player.rankPoints + rpChange);
+            const newRank = getRankFromRP(newRankPoints);
+            onRankUpdate(newRank, newRankPoints);
 
-            let resultP2: 'win' | 'loss' | 'draw' = 'draw';
-            if (match.winner === match.player2.uid) resultP2 = 'win';
-            else if (match.winner !== 'draw') resultP2 = 'loss';
+            // Authoritative update by player 1
+            if(isPlayer1) {
+                const p1Ref = database.ref(`users/${match.player1.uid}`);
+                const p2Ref = database.ref(`users/${match.player2.uid}`);
 
-            const historyEntryP1: ChallengeHistoryEntry = {
-                opponentUsername: match.player2.username,
-                betAmount: match.betAmount,
-                result: resultP1,
-                timestamp: Date.now(),
-            };
-            historyRefP1.set(historyEntryP1);
+                Promise.all([p1Ref.get(), p2Ref.get()]).then(([p1Snap, p2Snap]) => {
+                    const p1Data = p1Snap.val();
+                    const p2Data = p2Snap.val();
+                    
+                    const p1Result = match.winner === p1Data.uid ? 'win' : (match.winner === 'draw' ? 'draw' : 'loss');
+                    const p2Result = match.winner === p2Data.uid ? 'win' : (match.winner === 'draw' ? 'draw' : 'loss');
 
-            const historyEntryP2: ChallengeHistoryEntry = {
-                opponentUsername: match.player1.username,
-                betAmount: match.betAmount,
-                result: resultP2,
-                timestamp: Date.now(),
-            };
-            historyRefP2.set(historyEntryP2);
+                    const p1RankInfo = RANKS[p1Data.rank];
+                    const [p1RpWin, p1RpLoss] = p1RankInfo.rpChange;
+                    const p1RpChange = p1Result === 'win' ? p1RpWin : p1Result === 'loss' ? p1RpLoss : 0;
+                    const p1GoldChange = p1Result === 'win' ? match.goldAtStake : p1Result === 'loss' ? -match.goldAtStake : 0;
+                    const p1NewRp = Math.max(0, p1Data.rankPoints + p1RpChange);
+
+                    const p2RankInfo = RANKS[p2Data.rank];
+                    const [p2RpWin, p2RpLoss] = p2RankInfo.rpChange;
+                    const p2RpChange = p2Result === 'win' ? p2RpWin : p2Result === 'loss' ? p2RpLoss : 0;
+                    const p2GoldChange = p2Result === 'win' ? match.goldAtStake : p2Result === 'loss' ? -match.goldAtStake : 0;
+                    const p2NewRp = Math.max(0, p2Data.rankPoints + p2RpChange);
+                    
+                    // DB Updates
+                    p1Ref.update({ gold: p1Data.gold + p1GoldChange, rankPoints: p1NewRp, rank: getRankFromRP(p1NewRp) });
+                    p2Ref.update({ gold: p2Data.gold + p2GoldChange, rankPoints: p2NewRp, rank: getRankFromRP(p2NewRp) });
+                    
+                    // History entries
+                    const historyP1: ChallengeHistoryEntry = { opponentUsername: p2Data.username, goldChange: p1GoldChange, result: p1Result, timestamp: Date.now(), rankPointsChange: p1RpChange };
+                    const historyP2: ChallengeHistoryEntry = { opponentUsername: p1Data.username, goldChange: p2GoldChange, result: p2Result, timestamp: Date.now(), rankPointsChange: p2RpChange };
+
+                    database.ref(`users/${p1Data.uid}/challengeHistory/${match.matchId}`).set(historyP1);
+                    database.ref(`users/${p2Data.uid}/challengeHistory/${match.matchId}`).set(historyP2);
+                });
+            }
 
             setIsFinished(true);
         }
-    }, [match.status, match.winner, player, match.betAmount, onBalanceUpdate, match.matchId, match.player1, match.player2, isFinished]);
+    }, [match.status, match.winner, player, onBalanceUpdate, onRankUpdate, isPlayer1, isFinished, match]);
 
 
     const renderResult = () => {
@@ -134,7 +158,7 @@ const ChallengeMatchView: React.FC<ChallengeMatchProps> = ({ player, match, onBa
                 <h2 className={`text-4xl sm:text-6xl font-bold ${color} mb-4 text-center`}>{message}</h2>
                 <p className="text-lg sm:text-xl text-white mb-8 text-center">You mined {self.score} vs {opponent.username}'s {opponent.score}</p>
                 <button onClick={onFinish} className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-lg text-xl transform hover:-translate-y-1 hover:brightness-110">
-                    Back to Mine
+                    Back to Lobby
                 </button>
             </div>
         )
@@ -179,7 +203,7 @@ const ChallengeMatchView: React.FC<ChallengeMatchProps> = ({ player, match, onBa
 
             <div className="text-center">
                 <p className="text-yellow-200 text-lg">Tap as fast as you can!</p>
-                <p className="text-sm text-yellow-500">Winner takes {match.betAmount.toLocaleString()} 💰</p>
+                <p className="text-sm text-yellow-500">Winner takes {match.goldAtStake.toLocaleString()} 💰</p>
             </div>
         </div>
     );

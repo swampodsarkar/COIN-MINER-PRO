@@ -1,3 +1,5 @@
+import { Rank } from './types';
+
 export interface Axe {
     id: string;
     name: string;
@@ -20,6 +22,24 @@ export interface Hero {
     };
     emoji: string;
 }
+
+export const RANKS: Record<Rank, { minRP: number, maxRP: number, color: string, stakeRange: [number, number], rpChange: [number, number] }> = {
+    Bronze:   { minRP: 0,    maxRP: 99,   color: '#cd7f32', stakeRange: [10, 50],   rpChange: [10, -8] },
+    Silver:   { minRP: 100,  maxRP: 299,  color: '#c0c0c0', stakeRange: [50, 150],  rpChange: [10, -8] },
+    Gold:     { minRP: 300,  maxRP: 599,  color: '#ffd700', stakeRange: [150, 400], rpChange: [12, -10] },
+    Platinum: { minRP: 600,  maxRP: 999,  color: '#e5e4e2', stakeRange: [400, 1000], rpChange: [12, -10] },
+    Diamond:  { minRP: 1000, maxRP: 1499, color: '#b9f2ff', stakeRange: [1000, 2500],rpChange: [15, -12] },
+    Heroic:   { minRP: 1500, maxRP: Infinity, color: '#ff4500', stakeRange: [2500, 5000],rpChange: [15, -12] },
+};
+
+export const getRankFromRP = (rp: number): Rank => {
+    if (rp < 100) return 'Bronze';
+    if (rp < 300) return 'Silver';
+    if (rp < 600) return 'Gold';
+    if (rp < 1000) return 'Platinum';
+    if (rp < 1500) return 'Diamond';
+    return 'Heroic';
+};
 
 export const AXES: Record<string, Omit<Axe, 'id'>> = {
     'stone_axe': { name: 'Stone Axe', type: 'normal', power: 1, cost: 0, currency: 'gold', emoji: '🪨' },

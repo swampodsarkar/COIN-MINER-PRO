@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { database } from '../../services/firebase';
-import { Player, SystemData } from '../../types';
+import { Player, SystemData, Rank } from '../../types';
 import { INITIAL_PLAYER_STATE } from '../../constants';
 import Miner from './Miner';
 import LeaderboardView from './LeaderboardModal';
@@ -83,6 +83,10 @@ const GameScreen: React.FC = () => {
             if (!playerData.inventory.heroes) playerData.inventory.heroes = [];
             if (playerData.equipment.equippedHero === undefined) playerData.equipment.equippedHero = null;
             if (playerData.autoMinerLevel === undefined) playerData.autoMinerLevel = 0;
+            if (playerData.rank === undefined) {
+                playerData.rank = 'Bronze';
+                playerData.rankPoints = 0;
+            }
             
             const daysDiff = daysBetween(playerData.lastLogin, today);
     
@@ -350,6 +354,10 @@ const GameScreen: React.FC = () => {
         setShowDailyReward(false);
     };
 
+    const handleRankUpdate = (newRank: Rank, newRankPoints: number) => {
+        setPlayer(p => p ? {...p, rank: newRank, rankPoints: newRankPoints } : null);
+    };
+
     const renderView = () => {
         switch(activeView) {
             case 'store':
@@ -361,7 +369,12 @@ const GameScreen: React.FC = () => {
             case 'leaderboard':
                 return <LeaderboardView onBack={() => setActiveView('mine')} />;
             case 'challenge':
-                return <ChallengeScreen player={player!} onBack={() => setActiveView('mine')} onBalanceUpdate={(newGold) => setPlayer(p => p ? {...p, gold: newGold} : null)} />;
+                return <ChallengeScreen 
+                    player={player!} 
+                    onBack={() => setActiveView('mine')} 
+                    onBalanceUpdate={(newGold) => setPlayer(p => p ? {...p, gold: newGold} : null)}
+                    onRankUpdate={handleRankUpdate}
+                />;
             case 'mine':
             default:
                 const axePower = AXES[player!.equipment.equippedAxe]?.power || 1;
