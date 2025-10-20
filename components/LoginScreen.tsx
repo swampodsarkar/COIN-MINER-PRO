@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { auth, googleProvider } from '../services/firebase';
 import { GoogleIcon, EmailIcon } from './ui/icons';
@@ -56,7 +55,7 @@ const LoginScreen: React.FC = () => {
                         className="w-full bg-gray-700 text-white p-3 rounded-lg mb-4 border-2 border-gray-600 focus:border-yellow-500 focus:outline-none"
                         required
                     />
-                    <button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-4 rounded-lg border-2 border-yellow-700 shadow-lg transition duration-200 mb-4 flex items-center justify-center">
+                    <button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-4 rounded-lg border-2 border-yellow-700 shadow-lg transition duration-200 mb-4 flex items-center justify-center transform hover:-translate-y-1 hover:brightness-110">
                         <EmailIcon className="h-5 w-5 mr-2" />
                         {isSignUp ? 'Sign Up with Email' : 'Login with Email'}
                     </button>
@@ -74,7 +73,7 @@ const LoginScreen: React.FC = () => {
                     <div className="flex-grow border-t border-gray-600"></div>
                 </div>
 
-                <button onClick={handleGoogleLogin} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg border-2 border-blue-800 shadow-lg transition duration-200 flex items-center justify-center">
+                <button onClick={handleGoogleLogin} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg border-2 border-blue-800 shadow-lg transition duration-200 flex items-center justify-center transform hover:-translate-y-1 hover:brightness-110">
                     <GoogleIcon className="h-5 w-5 mr-2" />
                     Login with Google
                 </button>

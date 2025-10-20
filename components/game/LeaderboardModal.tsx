@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { database } from '../../services/firebase';
 import { LeaderboardEntry } from '../../types';
@@ -39,7 +38,7 @@ const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onBack }) => {
 
     return (
         <div className="w-full max-w-3xl h-full flex flex-col bg-black bg-opacity-60 p-4 rounded-xl border-2 border-yellow-600 relative">
-            <button onClick={onBack} className="absolute top-3 left-3 text-2xl bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors">
+            <button onClick={onBack} className="absolute top-3 left-3 text-2xl bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors transform hover:scale-110">
                 ⬅️
             </button>
             <h3 className="text-center text-2xl text-yellow-300 mb-6">TOP MINERS</h3>

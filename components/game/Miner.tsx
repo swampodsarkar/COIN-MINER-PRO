@@ -1,11 +1,13 @@
 
 import React, { useState } from 'react';
 import { Player, SystemData } from '../../types';
+import { AXES } from '../../gameConfig';
 
 interface MinerProps {
     player: Player;
     onMine: (amount: number) => void;
     system: SystemData | null;
+    effectiveMiningPower: number;
 }
 
 interface FloatingNumber {
@@ -23,22 +25,21 @@ interface Particle {
   size: number;
 }
 
-const Miner: React.FC<MinerProps> = ({ player, onMine, system }) => {
+const Miner: React.FC<MinerProps> = ({ player, onMine, system, effectiveMiningPower }) => {
     const [isMining, setIsMining] = useState(false);
     const [floatingNumbers, setFloatingNumbers] = useState<FloatingNumber[]>([]);
     const [particles, setParticles] = useState<Particle[]>([]);
 
-    const getPickaxeStyle = (power: number): { filter: string; name: string; nameColor: string } => {
-        if (power >= 20) {
-            return { filter: 'drop-shadow(0 0 8px rgba(0,255,255,0.9))', name: 'Diamond Pickaxe', nameColor: '#22d3ee' };
-        }
-        if (power >= 10) {
-            return { filter: 'drop-shadow(0 0 8px rgba(255,255,0,0.9))', name: 'Gold Pickaxe', nameColor: '#facc15' };
-        }
-        if (power >= 5) {
-            return { filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.7))', name: 'Iron Pickaxe', nameColor: '#e5e7eb' };
-        }
-        return { filter: 'none', name: 'Stone Pickaxe', nameColor: '#9ca3af' };
+    const getPickaxeDetails = () => {
+        const equippedAxe = AXES[player.equipment.equippedAxe];
+        if (!equippedAxe) return { emoji: '👊', name: 'Fists', nameColor: '#9ca3af' };
+
+        let nameColor = '#9ca3af'; // Default
+        if (equippedAxe.type === 'rare') nameColor = '#a78bfa'; // Purple for rare
+        else if (effectiveMiningPower >= 10) nameColor = '#facc15';
+        else if (effectiveMiningPower >= 5) nameColor = '#e5e7eb'; 
+
+        return { emoji: equippedAxe.emoji, name: equippedAxe.name, nameColor };
     };
 
     const handleMineClick = () => {
@@ -47,7 +48,7 @@ const Miner: React.FC<MinerProps> = ({ player, onMine, system }) => {
         setIsMining(true);
 
         const rushMultiplier = (system?.events.goldenRush && system.events.goldenRushEnds > Date.now()) ? 2 : 1;
-        const goldGained = player.miningPower * rushMultiplier;
+        const goldGained = effectiveMiningPower * rushMultiplier;
         onMine(goldGained);
         
         const newFloatingNumber: FloatingNumber = {
@@ -59,7 +60,7 @@ const Miner: React.FC<MinerProps> = ({ player, onMine, system }) => {
 
         setFloatingNumbers(prev => [...prev, newFloatingNumber]);
 
-        const particleCount = Math.min(10, Math.floor(player.miningPower / 2) + 1);
+        const particleCount = Math.min(10, Math.floor(effectiveMiningPower / 2) + 1);
         const newParticles: Particle[] = [];
         for (let i = 0; i < particleCount; i++) {
             const newParticle = {
@@ -85,7 +86,7 @@ const Miner: React.FC<MinerProps> = ({ player, onMine, system }) => {
         }, 1500);
     };
     
-    const pickaxeStyle = getPickaxeStyle(player.miningPower);
+    const pickaxeDetails = getPickaxeDetails();
 
     return (
         <div className="relative flex flex-col items-center justify-center my-4">
@@ -140,14 +141,13 @@ const Miner: React.FC<MinerProps> = ({ player, onMine, system }) => {
                 <button onClick={handleMineClick} className="w-64 h-64 bg-gray-700 rounded-full border-8 border-yellow-600 flex items-center justify-center focus:outline-none transition-transform duration-100 active:scale-95">
                     <span 
                         className={`text-7xl transition-all duration-300 ${isMining ? 'transform -rotate-45' : ''}`}
-                        style={{ filter: pickaxeStyle.filter }}
                     >
-                        ⛏️
+                        {pickaxeDetails.emoji}
                     </span>
                 </button>
             </div>
             <p className="mt-4 text-yellow-200 text-lg">Click to Mine!</p>
-            <p className="mt-1 text-sm" style={{ color: pickaxeStyle.nameColor }}>{pickaxeStyle.name}</p>
+            <p className="mt-1 text-sm font-bold" style={{ color: pickaxeDetails.nameColor }}>{pickaxeDetails.name}</p>
         </div>
     );
 };
