@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { database } from '../../services/firebase';
@@ -15,6 +16,7 @@ import LuckRoyale from './LuckRoyale';
 import AutoMinerPanel from './AutoMinerPanel';
 import UpgradePanel from './UpgradePanel';
 import { AXES, HEROES, LUCK_ROYALE_COST, LUCK_ROYALE_GUARANTEED_SPINS, LUCK_ROYALE_REWARDS, Axe, AUTO_MINER_CONFIG, BASE_GEM_DROP_CHANCE, PICKAXE_UPGRADE_CONFIG } from '../../gameConfig';
+import SettingsModal from './SettingsModal';
 
 type GameView = 'mine' | 'store' | 'luckRoyale' | 'leaderboard' | 'challenge' | 'heroes';
 
@@ -39,6 +41,7 @@ const GameScreen: React.FC = () => {
     const [spinResult, setSpinResult] = useState<{ message: string } | null>(null);
     const [isSpinning, setIsSpinning] = useState(false);
     const [screenShake, setScreenShake] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
 
     const playerRef = useRef(player);
     playerRef.current = player;
@@ -471,6 +474,7 @@ const GameScreen: React.FC = () => {
     return (
         <div className={`relative h-full w-full flex flex-col items-center justify-between overflow-hidden ${screenShake ? 'animate-screen-shake' : ''}`}>
             {showDailyReward && !player.dailyRewardClaimed && <DailyRewardModal loginStreak={player.loginStreak} onClaim={handleClaimDailyReward} onClose={() => setShowDailyReward(false)} />}
+            {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
 
             <EventAnnouncer system={system} />
 
@@ -488,6 +492,9 @@ const GameScreen: React.FC = () => {
                 <div className="flex items-center">
                     {equippedHero && <span className="text-2xl mr-2" title={`Equipped: ${equippedHero.name}`}>{equippedHero.emoji}</span>}
                     <p className="text-yellow-300 mr-4 hidden sm:block">{player.username}</p>
+                    <button onClick={() => setShowSettings(true)} className="text-2xl sm:text-3xl mr-3 transform hover:scale-110 transition-transform">
+                        ⚙️
+                    </button>
                     <button onClick={() => auth.signOut()} className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm py-2 px-3 rounded-lg border-2 border-red-800 transform hover:-translate-y-0.5">Logout</button>
                 </div>
             </header>

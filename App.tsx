@@ -6,6 +6,7 @@ import GameScreen from './components/game/GameScreen';
 import AdminPanel from './components/admin/AdminPanel';
 import { ADMIN_EMAILS } from './constants';
 import { Spinner } from './components/ui/Spinner';
+import LoadingScreen from './components/LoadingScreen';
 
 const AppContent: React.FC = () => {
     const { user, loading } = useAuth();
@@ -43,6 +44,12 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
+    const [appLoading, setAppLoading] = useState(true);
+
+    if (appLoading) {
+        return <LoadingScreen onLoaded={() => setAppLoading(false)} />;
+    }
+
     return (
         <AuthProvider>
             <AppContent />
