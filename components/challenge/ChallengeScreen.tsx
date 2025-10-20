@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Player, Division } from '../../types';
 import { database } from '../../services/firebase';
-import FootballMatch from './ClashSquadMatch'; // Renamed component, this is the match simulation
+import FootballMatch from './ClashSquadMatch';
 import { DIVISIONS } from '../../gameConfig';
 import { Spinner } from '../ui/Spinner';
 

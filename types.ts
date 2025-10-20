@@ -20,6 +20,8 @@ export interface MatchHistory {
     divisionPointsChange: number;
 }
 
+export type Strategy = 'DEFENSIVE' | 'BALANCED' | 'ATTACKING';
+
 export interface Player {
     uid: string;
     username: string;
@@ -76,4 +78,26 @@ export interface PlayerData {
 export interface Formation {
     name: string;
     positions: string[]; // e.g., ['GK', 'LB', 'CB', 'CB', 'RB', ...]
+    coordinates: { x: number; y: number }[];
+}
+
+
+// Types for 2D Match Simulation
+export interface FieldPlayer {
+    id: string;
+    team: 'player' | 'opponent';
+    x: number;
+    y: number;
+    initialX: number;
+    initialY: number;
+    hasBall: boolean;
+    data: PlayerData;
+}
+
+export interface Ball {
+    x: number;
+    y: number;
+    carrierId: string | null;
+    targetX: number;
+    targetY: number;
 }

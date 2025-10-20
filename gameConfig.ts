@@ -50,13 +50,52 @@ export const FORMATIONS: Record<string, Formation> = {
     '4-3-3': {
         name: '4-3-3',
         positions: ['GK', 'RB', 'CB', 'CB', 'LB', 'DMF', 'CMF', 'CMF', 'RWF', 'LWF', 'CF'],
+        coordinates: [
+            { x: 50, y: 8 },  // GK
+            { x: 85, y: 25 }, // RB
+            { x: 65, y: 18 }, // CB
+            { x: 35, y: 18 }, // CB
+            { x: 15, y: 25 }, // LB
+            { x: 50, y: 35 }, // DMF
+            { x: 70, y: 50 }, // CMF
+            { x: 30, y: 50 }, // CMF
+            { x: 80, y: 75 }, // RWF
+            { x: 20, y: 75 }, // LWF
+            { x: 50, y: 85 }, // CF
+        ],
     },
     '4-4-2': {
         name: '4-4-2',
-        positions: ['GK', 'RB', 'CB', 'CB', 'LB', 'CMF', 'CMF', 'RWF', 'LWF', 'CF', 'CF'],
+        positions: ['GK', 'RB', 'CB', 'CB', 'LB', 'RWF', 'CMF', 'CMF', 'LWF', 'CF', 'CF'],
+        coordinates: [
+            { x: 50, y: 8 },  // GK
+            { x: 85, y: 25 }, // RB
+            { x: 65, y: 18 }, // CB
+            { x: 35, y: 18 }, // CB
+            { x: 15, y: 25 }, // LB
+            { x: 85, y: 55 }, // RWF (RM)
+            { x: 60, y: 50 }, // CMF
+            { x: 40, y: 50 }, // CMF
+            { x: 15, y: 55 }, // LWF (LM)
+            { x: 60, y: 85 }, // CF
+            { x: 40, y: 85 }, // CF
+        ],
     },
     '3-5-2': {
         name: '3-5-2',
-        positions: ['GK', 'CB', 'CB', 'CB', 'DMF', 'CMF', 'CMF', 'RWF', 'LWF', 'CF', 'CF'],
+        positions: ['GK', 'CB', 'CB', 'CB', 'RWF', 'DMF', 'CMF', 'LWF', 'AMF', 'CF', 'CF'],
+        coordinates: [
+            { x: 50, y: 8 },  // GK
+            { x: 70, y: 20 }, // CB
+            { x: 50, y: 15 }, // CB
+            { x: 30, y: 20 }, // CB
+            { x: 90, y: 50 }, // RWF (RWB)
+            { x: 50, y: 35 }, // DMF
+            { x: 65, y: 55 }, // CMF
+            { x: 10, y: 50 }, // LWF (LWB)
+            { x: 35, y: 55 }, // AMF
+            { x: 60, y: 85 }, // CF
+            { x: 40, y: 85 }, // CF
+        ],
     },
 };
