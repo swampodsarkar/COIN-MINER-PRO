@@ -6,9 +6,11 @@ export interface Player {
     gems: number;
     equipment: {
         equippedAxe: string; // ID of the axe
+        equippedHero: string | null; // ID of the hero
     };
     inventory: {
         axes: string[]; // array of axe IDs
+        heroes: string[]; // array of hero IDs
     };
     luckRoyaleSpins: number;
     autoMinerLevel: number;

@@ -10,11 +10,12 @@ import EventAnnouncer from './EventAnnouncer';
 import ChallengeScreen from '../challenge/ChallengeScreen';
 import { auth } from '../../services/firebase';
 import Store from './Store';
+import HeroStore from './HeroStore';
 import LuckRoyale from './LuckRoyale';
 import AutoMinerPanel from './AutoMinerPanel';
-import { AXES, LUCK_ROYALE_COST, LUCK_ROYALE_GUARANTEED_SPINS, LUCK_ROYALE_REWARDS, Axe, AUTO_MINER_CONFIG } from '../../gameConfig';
+import { AXES, HEROES, LUCK_ROYALE_COST, LUCK_ROYALE_GUARANTEED_SPINS, LUCK_ROYALE_REWARDS, Axe, AUTO_MINER_CONFIG } from '../../gameConfig';
 
-type GameView = 'mine' | 'store' | 'luckRoyale' | 'leaderboard' | 'challenge';
+type GameView = 'mine' | 'store' | 'luckRoyale' | 'leaderboard' | 'challenge' | 'heroes';
 
 const daysBetween = (dateStr1: string, dateStr2: string): number => {
     const d1 = new Date(dateStr1);
@@ -78,6 +79,8 @@ const GameScreen: React.FC = () => {
             if (!playerData.equipment) {
                 playerData = { ...playerData, ...INITIAL_PLAYER_STATE, gold: playerData.gold, gems: playerData.gems };
             }
+            if (!playerData.inventory.heroes) playerData.inventory.heroes = [];
+            if (playerData.equipment.equippedHero === undefined) playerData.equipment.equippedHero = null;
             if (playerData.autoMinerLevel === undefined) playerData.autoMinerLevel = 0;
             
             const daysDiff = daysBetween(playerData.lastLogin, today);
@@ -205,6 +208,25 @@ const GameScreen: React.FC = () => {
         setPlayer(p => p ? { ...p, equipment: { ...p.equipment, equippedAxe: axeId } } : null);
     };
 
+    const handleBuyHero = (hero: { id: string, cost: number }) => {
+        setPlayer(p => {
+            if (!p || p.gems < hero.cost) return p;
+
+            return {
+                ...p,
+                gems: p.gems - hero.cost,
+                inventory: {
+                    ...p.inventory,
+                    heroes: [...p.inventory.heroes, hero.id],
+                }
+            };
+        });
+    };
+
+    const handleEquipHero = (heroId: string) => {
+        setPlayer(p => p ? { ...p, equipment: { ...p.equipment, equippedHero: heroId } } : null);
+    };
+
     const handleSpin = () => {
         if(!player || player.gold < LUCK_ROYALE_COST || isSpinning) return;
     
@@ -317,6 +339,8 @@ const GameScreen: React.FC = () => {
         switch(activeView) {
             case 'store':
                 return <Store player={player!} onBuyAxe={handleBuyAxe} onEquipAxe={handleEquipAxe} onBack={() => setActiveView('mine')}/>;
+            case 'heroes':
+                return <HeroStore player={player!} onBuyHero={handleBuyHero} onEquipHero={handleEquipHero} onBack={() => setActiveView('mine')} />;
             case 'luckRoyale':
                 return <LuckRoyale player={player!} onSpin={handleSpin} onBack={() => setActiveView('mine')} spinResult={spinResult} clearSpinResult={() => setSpinResult(null)} isSpinning={isSpinning} />;
             case 'leaderboard':
@@ -325,7 +349,10 @@ const GameScreen: React.FC = () => {
                 return <ChallengeScreen player={player!} onBack={() => setActiveView('mine')} onBalanceUpdate={(newGold) => setPlayer(p => p ? {...p, gold: newGold} : null)} />;
             case 'mine':
             default:
-                const effectiveMiningPower = AXES[player!.equipment.equippedAxe]?.power || 1;
+                const axePower = AXES[player!.equipment.equippedAxe]?.power || 1;
+                const heroMultiplier = player!.equipment.equippedHero ? HEROES[player!.equipment.equippedHero]?.powerMultiplier || 1 : 1;
+                const effectiveMiningPower = axePower * heroMultiplier;
+
                 const autoMinerLevel = player!.autoMinerLevel || 0;
                 const autoMinerUpgradeCost = AUTO_MINER_CONFIG.baseCost * Math.pow(AUTO_MINER_CONFIG.costMultiplier, autoMinerLevel);
                 const goldPerSecond = autoMinerLevel * AUTO_MINER_CONFIG.baseGoldPerSecond;
@@ -345,6 +372,12 @@ const GameScreen: React.FC = () => {
                                 className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-3 sm:py-3 sm:px-6 rounded-lg border-b-4 border-yellow-700 shadow-lg transition-transform active:scale-95 text-sm sm:text-lg transform hover:-translate-y-1 hover:brightness-110"
                             >
                                 Store 🏪
+                            </button>
+                             <button 
+                                onClick={() => setActiveView('heroes')}
+                                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-3 sm:py-3 sm:px-6 rounded-lg border-b-4 border-green-700 shadow-lg transition-transform active:scale-95 text-sm sm:text-lg transform hover:-translate-y-1 hover:brightness-110"
+                            >
+                                Heroes 🦸
                             </button>
                              <button 
                                 onClick={() => setActiveView('luckRoyale')}
@@ -374,6 +407,8 @@ const GameScreen: React.FC = () => {
         return <div className="flex items-center justify-center h-screen"><span className="text-2xl">Loading Mine...</span></div>;
     }
 
+    const equippedHero = player.equipment.equippedHero && HEROES[player.equipment.equippedHero];
+
     return (
         <div className="relative h-full w-full flex flex-col items-center justify-between overflow-hidden">
             {showDailyReward && !player.dailyRewardClaimed && <DailyRewardModal loginStreak={player.loginStreak} onClaim={handleClaimDailyReward} onClose={() => setShowDailyReward(false)} />}
@@ -392,6 +427,7 @@ const GameScreen: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex items-center">
+                    {equippedHero && <span className="text-2xl mr-2" title={`Equipped: ${equippedHero.name}`}>{equippedHero.emoji}</span>}
                     <p className="text-yellow-300 mr-4 hidden sm:block">{player.username}</p>
                     <button onClick={() => auth.signOut()} className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm py-2 px-3 rounded-lg border-2 border-red-800 transform hover:-translate-y-0.5">Logout</button>
                 </div>

@@ -10,9 +10,11 @@ export const INITIAL_PLAYER_STATE: Omit<Player, 'uid' | 'username' | 'email'> = 
     gems: 5,
     equipment: {
         equippedAxe: 'stone_axe',
+        equippedHero: null,
     },
     inventory: {
         axes: ['stone_axe'],
+        heroes: [],
     },
     luckRoyaleSpins: 0,
     autoMinerLevel: 0,

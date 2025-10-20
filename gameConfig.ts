@@ -8,6 +8,14 @@ export interface Axe {
     emoji: string;
 }
 
+export interface Hero {
+    id: string;
+    name: string;
+    cost: number; // in gems
+    powerMultiplier: number;
+    emoji: string;
+}
+
 export const AXES: Record<string, Omit<Axe, 'id'>> = {
     'stone_axe': { name: 'Stone Axe', type: 'normal', power: 1, cost: 0, currency: 'gold', emoji: '🪨' },
     'copper_pickaxe': { name: 'Copper Pickaxe', type: 'normal', power: 2, cost: 250, currency: 'gold', emoji: '⛏️' },
@@ -18,6 +26,27 @@ export const AXES: Record<string, Omit<Axe, 'id'>> = {
     'amethyst_axe': { name: 'Amethyst Axe', type: 'rare', power: 30, cost: 50, currency: 'gems', emoji: '🔮' },
     'ruby_smasher': { name: 'Ruby Smasher', type: 'rare', power: 50, cost: 150, currency: 'gems', emoji: '🩸' },
     'cosmic_drill': { name: 'Cosmic Drill', type: 'rare', power: 100, cost: 300, currency: 'gems', emoji: '🌌' },
+};
+
+export const HEROES: Record<string, Omit<Hero, 'id'>> = {
+    'dwarven_smith': { 
+        name: 'Dwarven Smith', 
+        cost: 500, 
+        powerMultiplier: 1.1, // 10% boost
+        emoji: '🛠️' 
+    },
+    'rock_golem': { 
+        name: 'Rock Golem', 
+        cost: 600, 
+        powerMultiplier: 1.25, // 25% boost
+        emoji: '🗿' 
+    },
+    'crystal_king': { 
+        name: 'Crystal King', 
+        cost: 999, 
+        powerMultiplier: 1.5, // 50% boost
+        emoji: '👑' 
+    },
 };
 
 export const AUTO_MINER_CONFIG = {
