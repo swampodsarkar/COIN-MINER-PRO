@@ -66,6 +66,11 @@ const ChallengeMatch: React.FC<ChallengeMatchProps> = ({ player, onMatchEnd }) =
     const [matchResult, setMatchResult] = useState<{ placement: number, isVictory: boolean } | null>(null);
     const [isActionInProgress, setIsActionInProgress] = useState(false);
     
+    // Visual effect states
+    const [isTakingDamage, setIsTakingDamage] = useState(false);
+    const [isShooting, setIsShooting] = useState(false);
+    const [isHealing, setIsHealing] = useState(false);
+
     const playerCharacter = CHARACTERS[player.ownedCharacters[0] || 'alok'];
     const landingOptions = useMemo(() => shuffleArray(MAP_LOCATIONS).slice(0, 3), []);
 
@@ -114,6 +119,8 @@ const ChallengeMatch: React.FC<ChallengeMatchProps> = ({ player, onMatchEnd }) =
                     if(location !== prev.nextLocation) {
                         addToLog('You are outside the zone and taking damage!');
                         setHp(h => h - 15);
+                        setIsTakingDamage(true);
+                        setTimeout(() => setIsTakingDamage(false), 300);
                     }
 
                     return { current: prev.current + 1, nextLocation: newLocation, timer: 45 };
@@ -164,11 +171,13 @@ const ChallengeMatch: React.FC<ChallengeMatchProps> = ({ player, onMatchEnd }) =
             case 'heal':
                 if(inventory.medkits > 0 && hp < maxHp) {
                     addToLog('Using a Medkit...');
+                    setIsHealing(true);
                     setTimeout(() => {
                         setHp(h => Math.min(maxHp, h + 50));
                         setInventory(i => ({ ...i, medkits: i.medkits - 1 }));
                         addToLog('You feel much better.');
                         setIsActionInProgress(false);
+                        setIsHealing(false);
                     }, 1500);
                 } else {
                     setIsActionInProgress(false);
@@ -179,6 +188,9 @@ const ChallengeMatch: React.FC<ChallengeMatchProps> = ({ player, onMatchEnd }) =
     
     const runEnemyEncounter = () => {
         addToLog('Enemy spotted!');
+        setIsShooting(true);
+        setTimeout(() => setIsShooting(false), 100);
+
         const playerPower = inventory.weapon.tier + inventory.armor.tier + inventory.helmet.tier;
         const enemyPower = (Math.floor(Math.random() * 3) + 1) * 3; // Random enemy gear
         
@@ -191,6 +203,8 @@ const ChallengeMatch: React.FC<ChallengeMatchProps> = ({ player, onMatchEnd }) =
                 const damage = Math.floor(Math.random() * 20 + 20);
                 addToLog(`You lost the firefight and took ${damage} damage!`);
                 setHp(h => h - damage);
+                setIsTakingDamage(true);
+                setTimeout(() => setIsTakingDamage(false), 300);
             }
         }, 1500);
     };
@@ -246,8 +260,15 @@ const ChallengeMatch: React.FC<ChallengeMatchProps> = ({ player, onMatchEnd }) =
         );
     }
 
+    const containerClasses = [
+        "w-full h-full flex flex-col items-center justify-between bg-black bg-opacity-80 p-2 sm:p-4 rounded-xl border-2 border-red-800 text-white transition-all duration-100",
+        isTakingDamage ? 'animate-screen-shake' : '',
+        isShooting ? 'animate-muzzle-flash' : '',
+        isHealing ? 'animate-healing-pulse' : '',
+    ].join(' ');
+
     return (
-        <div className="w-full h-full flex flex-col items-center justify-between bg-black bg-opacity-80 p-2 sm:p-4 rounded-xl border-2 border-red-800 animate-fade-in text-white">
+        <div className={containerClasses}>
             {/* Header */}
             <div className="w-full flex justify-between items-center bg-black/30 p-2 rounded-lg">
                  <div className="text-center">
