@@ -7,7 +7,7 @@ interface ChallengeMatchProps {
     player: Player;
     opponent: Player | null; // For now, we can simulate a bot
     result: 'win' | 'loss';
-    onMatchEnd: (result: 'win' | 'loss', goldChange: number, rankPointsChange: number) => void;
+    onMatchEnd: (result: 'win' | 'loss', goldChange: number, rankPointsChange: number, playerHeroId: string, opponentHeroId: string) => void;
 }
 
 const GOLD_REWARD = 100;
@@ -39,9 +39,9 @@ const ChallengeMatch: React.FC<ChallengeMatchProps> = ({ player, result, onMatch
         if (showResult) {
             const goldChange = result === 'win' ? GOLD_REWARD : 0; // Win gold, lose nothing
             const rankPointsChange = result === 'win' ? RANK_POINTS_CHANGE : -RANK_POINTS_CHANGE;
-            onMatchEnd(result, goldChange, rankPointsChange);
+            onMatchEnd(result, goldChange, rankPointsChange, playerHero.id, opponentHero.id);
         }
-    }, [showResult, result, onMatchEnd]);
+    }, [showResult, result, onMatchEnd, playerHero.id, opponentHero.id]);
 
 
     if (showResult) {
@@ -63,13 +63,13 @@ const ChallengeMatch: React.FC<ChallengeMatchProps> = ({ player, result, onMatch
             <div className="flex w-full justify-around items-center">
                  {/* Player Side */}
                 <div className="flex flex-col items-center">
-                    <img src={playerHero.skins[0].fullUrl} alt={playerHero.name} className="h-64" />
+                    <div className="text-8xl md:text-9xl mb-2">{playerHero.emoji}</div>
                     <p className="text-white text-lg font-bold">{player.username}</p>
                 </div>
                  <div className="text-5xl font-bold text-red-500">VS</div>
                 {/* Opponent Side */}
                 <div className="flex flex-col items-center">
-                    <img src={opponentHero.skins[0].fullUrl} alt={opponentHero.name} className="h-64 scale-x-[-1]" />
+                     <div className="text-8xl md:text-9xl mb-2 scale-x-[-1]">{opponentHero.emoji}</div>
                     <p className="text-white text-lg font-bold">Bot Player</p>
                 </div>
             </div>

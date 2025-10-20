@@ -11,17 +11,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ player, onPlay }) => {
     // For now, just show the first hero they own. This can be expanded to a "favorite hero" system.
     const displayHeroId = player.ownedHeroes[0] || 'toro';
     const displayHero = HEROES[displayHeroId];
-    const heroSkin = displayHero.skins.find(s => s.id === `${displayHero.id}_default`);
 
     return (
         <div className="relative w-full h-full flex items-center justify-center">
             {/* Hero display */}
             <div className="absolute inset-0 flex items-center justify-center">
-                <img 
-                    src={heroSkin?.fullUrl} 
-                    alt={displayHero.name} 
-                    className="max-w-[80%] max-h-[80%] object-contain -mb-20" 
-                />
+                 <div className="text-[12rem] sm:text-[16rem] md:text-[20rem] -mb-20 drop-shadow-2xl">
+                    {displayHero.emoji}
+                </div>
             </div>
 
             {/* Play Button */}

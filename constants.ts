@@ -9,7 +9,6 @@ export const INITIAL_PLAYER_STATE: Omit<Player, 'uid' | 'username' | 'email'> = 
     gold: 500,
     diamonds: 0,
     ownedHeroes: ['toro'], // Start with a default hero
-    ownedSkins: ['toro_default'],
     emblems: {
         physical: { level: 1, xp: 0 },
         magical: { level: 1, xp: 0 },

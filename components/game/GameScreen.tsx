@@ -14,6 +14,7 @@ import TopUpModal from './TopUpModal';
 import HomeScreen from './HomeScreen';
 import BottomNavBar from './BottomNavBar';
 import { HEROES } from '../../gameConfig';
+import PrepScreen from './PrepScreen';
 
 export type GameView = 'home' | 'heroes' | 'prep' | 'shop' | 'leaderboard';
 
@@ -104,6 +105,14 @@ const GameScreen: React.FC = () => {
         return () => systemRef.off();
     }, [initializePlayer]);
 
+    useEffect(() => {
+        if (activeView === 'shop') {
+            setShowTopUpModal(true);
+            // Reset view to home so the modal appears over it
+            setActiveView('home');
+        }
+    }, [activeView]);
+
     const saveData = useCallback(() => {
         if (playerRef.current && user) {
             database.ref(`users/${user.uid}`).set(playerRef.current);
@@ -172,6 +181,8 @@ const GameScreen: React.FC = () => {
                 return <HeroStore player={player!} onBuyHero={handleBuyHero} />;
             case 'leaderboard':
                 return <LeaderboardModal onBack={() => setActiveView('home')} />;
+            case 'prep':
+                return <PrepScreen />;
             case 'home':
             default:
                 return <HomeScreen player={player!} onPlay={() => setShowChallengeScreen(true)} />;
@@ -198,7 +209,9 @@ const GameScreen: React.FC = () => {
 
              <header className="absolute top-0 left-0 right-0 w-full flex justify-between items-center bg-black bg-opacity-30 p-2 sm:p-3 z-20">
                  <div className="flex items-center space-x-2">
-                    <img src={firstHero.skins.find(s=>s.id === `${firstHero.id}_default`)?.iconUrl} alt="avatar" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-yellow-400"/>
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-yellow-400 bg-gray-800 flex items-center justify-center text-3xl">
+                        {firstHero.emoji}
+                    </div>
                     <div>
                         <p className="text-white text-sm sm:text-lg font-bold">{player.username}</p>
                         <p className="text-yellow-300 text-xs sm:text-sm">{player.rank} {player.rankPoints} RP</p>

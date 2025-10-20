@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { database } from '../../services/firebase';
 import { MatchHistory } from '../../types';
 import { Spinner } from '../ui/Spinner';
+import { HEROES } from '../../gameConfig';
 
 interface ChallengeHistoryProps {
     playerId: string;
@@ -40,22 +41,29 @@ const ChallengeHistory: React.FC<ChallengeHistoryProps> = ({ playerId, onBack })
             ) : (
                 <div className="flex-grow overflow-y-auto pr-2">
                     <ul className="space-y-2">
-                        {history.map(match => (
-                            <li key={match.id} className={`flex items-center justify-between p-3 rounded-lg border-l-4 ${match.result === 'win' ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10'}`}>
-                                <div>
-                                    <p className="font-bold text-white">vs {match.opponentName}</p>
-                                    <p className="text-xs text-gray-400">{new Date(match.timestamp).toLocaleString()}</p>
-                                </div>
-                                <div className="text-right">
-                                     <p className={`font-bold ${match.result === 'win' ? 'text-green-400' : 'text-red-400'}`}>
-                                        {match.result.toUpperCase()}
-                                    </p>
-                                    <p className={`text-sm font-semibold ${match.rankPointsChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                        {match.rankPointsChange >= 0 ? `+${match.rankPointsChange}` : match.rankPointsChange} RP
-                                    </p>
-                                </div>
-                            </li>
-                        ))}
+                        {history.map(match => {
+                            const playerHero = HEROES[match.playerHeroId] || null;
+                            const opponentHero = HEROES[match.opponentHeroId] || null;
+                            return (
+                                <li key={match.id} className={`flex items-center justify-between p-3 rounded-lg border-l-4 ${match.result === 'win' ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10'}`}>
+                                    <div className="flex items-center gap-3">
+                                        {playerHero && <span className="text-3xl">{playerHero.emoji}</span>}
+                                        <div>
+                                            <p className="font-bold text-white">vs {match.opponentName} {opponentHero && <span className="text-xl">{opponentHero.emoji}</span>}</p>
+                                            <p className="text-xs text-gray-400">{new Date(match.timestamp).toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className={`font-bold ${match.result === 'win' ? 'text-green-400' : 'text-red-400'}`}>
+                                            {match.result.toUpperCase()}
+                                        </p>
+                                        <p className={`text-sm font-semibold ${match.rankPointsChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                            {match.rankPointsChange >= 0 ? `+${match.rankPointsChange}` : match.rankPointsChange} RP
+                                        </p>
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </div>
             )}

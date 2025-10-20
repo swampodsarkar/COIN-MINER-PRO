@@ -32,7 +32,9 @@ const HeroStore: React.FC<HeroStoreProps> = ({ player, onBuyHero }) => {
 
         return (
             <div className={`bg-gray-800 rounded-lg border-2 flex flex-col text-center transition-transform hover:scale-105 shadow-lg ${rarityStyles[hero.role]}`}>
-                <img src={hero.skins[0].fullUrl} alt={hero.name} className="rounded-t-md object-cover h-40" />
+                <div className="rounded-t-md h-40 bg-gray-900 flex items-center justify-center">
+                    <span className="text-7xl">{hero.emoji}</span>
+                </div>
                 <div className="p-3 flex flex-col flex-grow">
                     <h4 className={`text-lg mb-1 font-bold text-white`}>{hero.name}</h4>
                     <p className={`text-xs font-bold mb-2 text-gray-400`}>{hero.role}</p>

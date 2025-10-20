@@ -31,7 +31,7 @@ const ChallengeScreen: React.FC<ChallengeScreenProps> = ({ player, onBack, onBal
         }, 3000);
     };
 
-    const handleMatchEnd = (result: 'win' | 'loss', goldChange: number, rankPointsChange: number) => {
+    const handleMatchEnd = (result: 'win' | 'loss', goldChange: number, rankPointsChange: number, playerHeroId: string, opponentHeroId: string) => {
         const newGold = player.gold + goldChange;
         onBalanceUpdate(newGold);
         
@@ -46,6 +46,8 @@ const ChallengeScreen: React.FC<ChallengeScreenProps> = ({ player, onBack, onBal
             result,
             rankPointsChange,
             timestamp: Date.now(),
+            playerHeroId,
+            opponentHeroId,
         };
         matchHistoryRef.set(newMatch);
 

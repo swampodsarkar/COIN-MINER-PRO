@@ -20,7 +20,6 @@ export interface Player {
     gold: number;
     diamonds: number;
     ownedHeroes: string[];
-    ownedSkins: string[];
     emblems: {
         physical: Emblem;
         magical: Emblem;
@@ -56,22 +55,15 @@ export interface Notification {
     timestamp: number;
 }
 
-export interface Skin {
-    id: string;
-    name: string;
-    fullUrl: string;
-    iconUrl: string;
-}
-
 export interface Hero {
     id: string;
     name: string;
     role: 'Fighter' | 'Mage' | 'Marksman' | 'Tank';
+    emoji: string;
     cost: {
         gold: number;
         diamonds: number;
     };
-    skins: Skin[];
 }
 
 export interface MatchHistory {
@@ -80,4 +72,6 @@ export interface MatchHistory {
     result: 'win' | 'loss';
     rankPointsChange: number;
     timestamp: number;
+    playerHeroId: string;
+    opponentHeroId: string;
 }
