@@ -3,25 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Click2Mine – The Gold Rush</title>
+    <title>Battle Legends: Nexus Siege</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
       body {
-        font-family: 'Press Start 2P', cursive;
-        background-color: #090a0f;
-        background-image: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+        font-family: 'Poppins', sans-serif;
+        background-color: #0c132c;
+        background-image: linear-gradient(180deg, #0c132c 0%, #0a1022 50%, #1a2a52 100%);
         min-height: 100vh;
       }
       @keyframes pulse-anim {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.2); }
-        100% { transform: scale(1); }
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+        70% { transform: scale(1.05); box-shadow: 0 0 10px 15px rgba(255, 215, 0, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
       }
       .animate-pulse-update {
-        animation: pulse-anim 0.3s ease-out;
+        animation: pulse-anim 0.5s ease-out;
       }
       button {
         transition: all 0.2s ease-in-out;
@@ -43,13 +43,13 @@
       .animate-screen-shake {
         animation: screen-shake 0.3s linear;
       }
-      @keyframes pickaxe-mine {
-        0% { transform: rotate(10deg); }
-        50% { transform: rotate(-55deg) scale(1.1); }
-        100% { transform: rotate(10deg); }
+      @keyframes attack-anim {
+        0% { transform: scale(1) rotate(5deg); }
+        50% { transform: scale(1.15) rotate(-35deg); }
+        100% { transform: scale(1) rotate(5deg); }
       }
-      .animate-pickaxe-mine {
-        animation: pickaxe-mine 0.3s ease-out;
+      .animate-hero-attack {
+        animation: attack-anim 0.2s ease-out;
       }
       @keyframes fade-in {
         from { opacity: 0; transform: translateY(10px); }
@@ -57,6 +57,20 @@
       }
       .animate-fade-in {
         animation: fade-in 0.4s ease-out;
+      }
+      @keyframes level-up-glow {
+        0%, 100% { box-shadow: 0 0 5px 2px #fef08a; }
+        50% { box-shadow: 0 0 20px 8px #fde047; }
+      }
+      .animate-level-up {
+        animation: level-up-glow 1.5s ease-out;
+      }
+      @keyframes victory-banner {
+        0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+        100% { transform: scale(1) rotate(0deg); opacity: 1; }
+      }
+      .animate-victory {
+        animation: victory-banner 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
       }
     </style>
   <script type="importmap">

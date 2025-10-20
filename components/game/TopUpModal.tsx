@@ -19,8 +19,8 @@ const gemPacks = [
 ];
 
 const membershipsData = [
-    { type: 'weekly' as const, name: 'Weekly Membership', days: 7, dailyGems: 50, price: 150, popular: true },
-    { type: 'monthly' as const, name: 'Monthly Membership', days: 30, dailyGems: 80, price: 800, popular: false },
+    { type: 'weekly' as const, name: 'Weekly Pass', days: 7, dailyGems: 50, price: 150, popular: true },
+    { type: 'monthly' as const, name: 'Monthly Pass', days: 30, dailyGems: 80, price: 800, popular: false },
 ];
 
 const TopUpModal: React.FC<TopUpModalProps> = ({ player, onClose, onBuyGems, onBuyMembership }) => {
@@ -36,11 +36,11 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ player, onClose, onBuyGems, onB
     );
 
     return (
-        <Modal title="Top-Up Center" onClose={onClose}>
+        <Modal title="Shop" onClose={onClose}>
             <div className="w-full">
                 <div className="flex border-b border-gray-700 mb-4">
-                    <TabButton tab="gems" label="Gems" />
-                    <TabButton tab="membership" label="Membership" />
+                    <TabButton tab="gems" label="Diamonds" />
+                    <TabButton tab="membership" label="Passes" />
                 </div>
                 {activeTab === 'gems' && (
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto p-1">
@@ -75,14 +75,14 @@ const TopUpModal: React.FC<TopUpModalProps> = ({ player, onClose, onBuyGems, onB
                                         disabled={!!player.activeMembership}
                                         className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-5 rounded-lg border-b-2 border-green-800 shadow-sm transition-all active:scale-95 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:border-gray-700 disabled:text-gray-400"
                                     >
-                                        {sub.price} TK
+                                        {player.activeMembership ? 'Active' : `${sub.price} TK`}
                                     </button>
                                 </div>
                             </div>
                          ))}
                          {player.activeMembership && (
                             <div className="text-center text-yellow-400 p-2 bg-yellow-500/10 rounded-lg mt-4">
-                                <p>You have an active {player.activeMembership.type} membership.</p>
+                                <p>You have an active {player.activeMembership.type} pass.</p>
                                 <p className="text-sm">Expires: {new Date(player.activeMembership.expiresAt).toLocaleDateString()}</p>
                             </div>
                          )}

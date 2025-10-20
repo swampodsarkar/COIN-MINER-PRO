@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { database } from '../../services/firebase';
 import { Player, LeaderboardEntry } from '../../types';
@@ -13,8 +12,8 @@ const StatCard: React.FC<{title: string; value: string | number}> = ({ title, va
 
 
 const Dashboard: React.FC = () => {
-    const [stats, setStats] = useState({ totalPlayers: 0, totalGold: 0 });
-    const [topMiners, setTopMiners] = useState<LeaderboardEntry[]>([]);
+    const [stats, setStats] = useState({ totalPlayers: 0 });
+    const [topPlayers, setTopPlayers] = useState<LeaderboardEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -24,17 +23,16 @@ const Dashboard: React.FC = () => {
             const usersSnapshot = await usersRef.get();
             const usersData: {[key: string]: Player} = usersSnapshot.val() || {};
             const totalPlayers = Object.keys(usersData).length;
-            const totalGold = Object.values(usersData).reduce((sum, player) => sum + player.gold, 0);
             
-            setStats({ totalPlayers, totalGold: Math.floor(totalGold) });
+            setStats({ totalPlayers });
 
-            const leaderboardRef = database.ref('leaderboard').orderByChild('gold').limitToLast(10);
+            const leaderboardRef = database.ref('leaderboard').orderByChild('rankPoints').limitToLast(10);
             const leaderboardSnapshot = await leaderboardRef.get();
             const leaderboardData = leaderboardSnapshot.val() || {};
-            const sortedMiners = Object.values(leaderboardData as {[key: string]: LeaderboardEntry})
-                .sort((a, b) => b.gold - a.gold);
+            const sortedPlayers = Object.values(leaderboardData as {[key: string]: LeaderboardEntry})
+                .sort((a, b) => (b.rankPoints ?? 0) - (a.rankPoints ?? 0));
 
-            setTopMiners(sortedMiners);
+            setTopPlayers(sortedPlayers);
             setLoading(false);
         };
         fetchData();
@@ -48,16 +46,15 @@ const Dashboard: React.FC = () => {
         <div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <StatCard title="Total Registered Players" value={stats.totalPlayers.toLocaleString()} />
-                <StatCard title="Total Gold Mined" value={stats.totalGold.toLocaleString()} />
             </div>
 
             <div className="mt-8 bg-gray-800 p-6 rounded-lg">
-                <h3 className="text-xl text-yellow-300 mb-4">Top 10 Miners</h3>
+                <h3 className="text-xl text-yellow-300 mb-4">Top 10 Players by Rank</h3>
                 <ul className="space-y-2">
-                    {topMiners.map((miner, index) => (
+                    {topPlayers.map((player, index) => (
                         <li key={index} className="flex justify-between items-center bg-gray-700 p-3 rounded">
-                            <span>{index + 1}. {miner.username}</span>
-                            <span className="text-yellow-400">{Math.floor(miner.gold).toLocaleString()} Gold</span>
+                            <span>{index + 1}. {player.username}</span>
+                            <span className="text-yellow-400">{Math.floor(player.rankPoints ?? 0).toLocaleString()} RP</span>
                         </li>
                     ))}
                 </ul>

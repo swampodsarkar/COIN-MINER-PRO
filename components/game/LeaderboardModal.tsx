@@ -4,16 +4,15 @@ import { LeaderboardEntry } from '../../types';
 import { Spinner } from '../ui/Spinner';
 import { RANKS } from '../../gameConfig';
 
-interface LeaderboardViewProps {
+interface LeaderboardProps {
     onBack: () => void;
 }
 
-const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onBack }) => {
+const LeaderboardModal: React.FC<LeaderboardProps> = ({ onBack }) => {
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchLeaderboard = () => {
-        setLoading(true);
+    useEffect(() => {
         const leaderboardRef = database.ref('leaderboard').orderByChild('rankPoints').limitToLast(100);
         leaderboardRef.once('value', snapshot => {
             const data: { [key: string]: LeaderboardEntry } = snapshot.val();
@@ -22,40 +21,35 @@ const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onBack }) => {
                     .map(key => ({
                         uid: key,
                         username: data[key].username,
-                        gold: data[key].gold,
                         rankPoints: data[key].rankPoints || 0,
-                        rank: data[key].rank || 'Bronze',
+                        rank: data[key].rank || 'Warrior',
                     }))
                     .sort((a, b) => b.rankPoints - a.rankPoints);
                 setLeaderboard(sortedData);
             }
             setLoading(false);
         });
-    };
-
-    useEffect(() => {
-        fetchLeaderboard();
     }, []);
 
     return (
-        <div className="w-full max-w-3xl h-full flex flex-col bg-black bg-opacity-60 p-4 rounded-xl border-2 border-yellow-600 relative">
-            <button onClick={onBack} className="absolute top-3 right-3 text-2xl bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors transform hover:scale-110">
-                X
+        <div className="w-full h-full flex flex-col bg-black bg-opacity-70 p-4 rounded-xl border-2 border-purple-600 relative">
+            <button onClick={onBack} className="absolute top-4 left-4 text-2xl bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors transform hover:scale-110 z-10">
+                ⬅️
             </button>
-            <h3 className="text-center text-2xl text-yellow-300 mb-6">TOP MINERS</h3>
+            <h3 className="text-center text-3xl font-bold text-yellow-300 mb-6">GLOBAL RANKINGS</h3>
             {loading ? (
                 <div className="flex justify-center items-center h-64"><Spinner /></div>
             ) : (
-                <div className="flex-grow overflow-y-auto">
+                <div className="flex-grow overflow-y-auto pr-2">
                     <ul className="space-y-2">
                         {leaderboard.map((entry, index) => {
-                             const rankConfig = RANKS[entry.rank];
+                             const rankConfig = RANKS[entry.rank] || RANKS.Warrior;
                              return (
                                 <li key={entry.uid} className="flex items-center justify-between bg-gray-800 p-3 rounded-lg border border-gray-700 shadow-md">
                                     <div className="flex items-center">
                                         <span className={`font-bold w-10 text-lg ${index < 3 ? 'text-yellow-400' : 'text-gray-400'}`}>{index + 1}.</span>
                                         <div className="flex flex-col ml-2">
-                                            <span className="text-white text-lg">{entry.username}</span>
+                                            <span className="text-white text-lg font-semibold">{entry.username}</span>
                                             <span className="text-xs font-bold" style={{ color: rankConfig.color }}>{entry.rank}</span>
                                         </div>
                                     </div>
@@ -72,4 +66,4 @@ const LeaderboardView: React.FC<LeaderboardViewProps> = ({ onBack }) => {
     );
 };
 
-export default LeaderboardView;
+export default LeaderboardModal;

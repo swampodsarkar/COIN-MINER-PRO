@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { auth, googleProvider } from '../services/firebase';
 import { GoogleIcon, EmailIcon } from './ui/icons';
@@ -11,6 +12,7 @@ const LoginScreen: React.FC = () => {
     const handleGoogleLogin = async () => {
         try {
             await auth.signInWithPopup(googleProvider);
+        // FIX: Added curly braces to the catch block and removed an extra closing brace.
         } catch (error: any) {
             setError(error.message);
         }
@@ -32,9 +34,9 @@ const LoginScreen: React.FC = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-900 bg-opacity-70 p-4">
-            <div className="w-full max-w-md bg-gray-800 bg-opacity-80 rounded-2xl shadow-2xl p-8 border-2 border-yellow-500">
-                <h1 className="text-4xl text-yellow-400 text-center mb-2 tracking-widest">Click2Mine</h1>
-                <h2 className="text-xl text-yellow-200 text-center mb-8">The Gold Rush</h2>
+            <div className="w-full max-w-md bg-gray-800 bg-opacity-80 rounded-2xl shadow-2xl p-8 border-2 border-purple-500">
+                <h1 className="text-4xl font-bold text-yellow-400 text-center mb-2 tracking-wider">BATTLE LEGENDS</h1>
+                <h2 className="text-xl text-blue-300 text-center mb-8">Push The Lane</h2>
 
                 {error && <p className="text-red-500 text-center mb-4 text-xs">{error}</p>}
 

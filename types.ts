@@ -1,9 +1,16 @@
-export type Rank = 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | 'Diamond' | 'Heroic';
+// FIX: Added type definitions for the application.
+export type Rank = 'Warrior' | 'Elite' | 'Master' | 'Grandmaster' | 'Epic' | 'Legend' | 'Mythic';
+
+export interface Emblem {
+    level: number;
+    xp: number;
+}
 
 export interface MembershipInfo {
     type: 'weekly' | 'monthly';
-    expiresAt: number; // Timestamp
-    lastClaimedDailyGems: string; // YYYY-MM-DD
+    startedAt: number;
+    expiresAt: number;
+    lastClaimedDailyDiamonds: string; // ISO date string YYYY-MM-DD
 }
 
 export interface Player {
@@ -11,52 +18,36 @@ export interface Player {
     username: string;
     email: string;
     gold: number;
-    gems: number;
-    equipment: {
-        equippedAxe: string; // ID of the axe
-        equippedHero: string | null; // ID of the hero
+    diamonds: number;
+    ownedHeroes: string[];
+    ownedSkins: string[];
+    emblems: {
+        physical: Emblem;
+        magical: Emblem;
+        tank: Emblem;
     };
-    inventory: {
-        axes: string[]; // array of axe IDs
-        heroes: string[]; // array of hero IDs
-    };
-    luckRoyaleSpins: number;
-    autoMinerLevel: number;
-    miningPowerLevel: number;
     banned: boolean;
-    lastLogin: string; // ISO string
+    lastLogin: string; // ISO date string YYYY-MM-DD
     dailyRewardClaimed: boolean;
     loginStreak: number;
-    activeMatch?: string | null;
     rank: Rank;
     rankPoints: number;
-    activeMembership?: MembershipInfo | null;
-}
-
-export interface LeaderboardEntry {
-    uid: string;
-    username: string;
-    gold: number;
-    rankPoints: number;
-    rank: Rank;
-}
-
-export interface GameConfig {
-    upgradeCosts: {
-        miningPower: { base: number, multiplier: number };
-        miningSpeed: { base: number, multiplier: number };
-        autoMiner: { base: number, multiplier: number };
-    };
-    adRewardMultiplier: number;
-    miningDifficulty: number;
+    activeMembership: MembershipInfo | null;
 }
 
 export interface SystemData {
     season: number;
     events: {
         goldenRush: boolean;
-        goldenRushEnds: number; // Timestamp
+        goldenRushEnds: number;
     };
+}
+
+export interface LeaderboardEntry {
+    uid: string;
+    username: string;
+    rankPoints: number;
+    rank: Rank;
 }
 
 export interface Notification {
@@ -65,38 +56,28 @@ export interface Notification {
     timestamp: number;
 }
 
-export interface ChallengeQueueEntry {
-    uid: string;
-    username: string;
-    rank: Rank;
-    timestamp: number;
+export interface Skin {
+    id: string;
+    name: string;
+    fullUrl: string;
+    iconUrl: string;
 }
 
-export interface ChallengeMatch {
-    matchId: string;
-    status: 'countdown' | 'inprogress' | 'finished' | 'cancelled';
-    goldAtStake: number;
-    startTime: number;
-    
-    player1: {
-        uid: string;
-        username: string;
-        score: number;
+export interface Hero {
+    id: string;
+    name: string;
+    role: 'Fighter' | 'Mage' | 'Marksman' | 'Tank';
+    cost: {
+        gold: number;
+        diamonds: number;
     };
-
-    player2: {
-        uid: string;
-        username: string;
-        score: number;
-    };
-
-    winner?: string; // uid of the winner
+    skins: Skin[];
 }
 
-export interface ChallengeHistoryEntry {
-    opponentUsername: string;
-    goldChange: number;
-    result: 'win' | 'loss' | 'draw';
-    timestamp: number;
+export interface MatchHistory {
+    id: string;
+    opponentName: string;
+    result: 'win' | 'loss';
     rankPointsChange: number;
+    timestamp: number;
 }

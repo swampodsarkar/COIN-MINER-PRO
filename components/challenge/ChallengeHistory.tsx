@@ -1,66 +1,59 @@
+// FIX: Added component implementation for match history screen.
 import React, { useState, useEffect } from 'react';
 import { database } from '../../services/firebase';
-import { ChallengeHistoryEntry } from '../../types';
+import { MatchHistory } from '../../types';
 import { Spinner } from '../ui/Spinner';
 
 interface ChallengeHistoryProps {
-    playerUid: string;
+    playerId: string;
     onBack: () => void;
 }
 
-const ChallengeHistory: React.FC<ChallengeHistoryProps> = ({ playerUid, onBack }) => {
-    const [history, setHistory] = useState<ChallengeHistoryEntry[]>([]);
+const ChallengeHistory: React.FC<ChallengeHistoryProps> = ({ playerId, onBack }) => {
+    const [history, setHistory] = useState<MatchHistory[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const historyRef = database.ref(`users/${playerUid}/challengeHistory`).orderByChild('timestamp').limitToLast(50);
+        const historyRef = database.ref(`users/${playerId}/matchHistory`).orderByChild('timestamp').limitToLast(20);
         historyRef.once('value', snapshot => {
             const data = snapshot.val();
             if (data) {
-                const historyList = Object.values(data) as ChallengeHistoryEntry[];
-                setHistory(historyList.reverse()); // Show most recent first
+                const historyList = Object.keys(data)
+                    .map(key => ({ id: key, ...data[key] }))
+                    .sort((a, b) => b.timestamp - a.timestamp);
+                setHistory(historyList);
             }
             setLoading(false);
         });
-    }, [playerUid]);
-
-    const getResultIndicator = (result: 'win' | 'loss' | 'draw') => {
-        switch(result) {
-            case 'win': return <span className="text-green-500 font-bold text-lg">WIN</span>;
-            case 'loss': return <span className="text-red-500 font-bold text-lg">LOSS</span>;
-            case 'draw': return <span className="text-yellow-500 font-bold text-lg">DRAW</span>;
-        }
-    }
+    }, [playerId]);
 
     return (
-        <div className="w-full max-w-3xl h-full flex flex-col bg-black bg-opacity-60 p-4 rounded-xl border-2 border-yellow-600 relative">
-            <button onClick={onBack} className="absolute top-3 left-3 text-2xl bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors z-10 transform hover:scale-110">
+        <div className="w-full max-w-2xl h-full flex flex-col bg-black bg-opacity-70 p-4 rounded-xl border-2 border-blue-600 relative">
+            <button onClick={onBack} className="absolute top-4 left-4 text-2xl bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors transform hover:scale-110 z-10">
                 ⬅️
             </button>
-            <h3 className="text-center text-2xl text-yellow-300 mb-6">MATCH HISTORY</h3>
+            <h3 className="text-center text-2xl font-bold text-yellow-300 mb-6">Match History</h3>
             {loading ? (
-                <div className="flex justify-center items-center h-full"><Spinner /></div>
+                <div className="flex justify-center items-center h-64"><Spinner /></div>
             ) : history.length === 0 ? (
-                 <div className="flex justify-center items-center h-full">
-                    <p className="text-gray-400">No matches played yet.</p>
-                </div>
+                 <p className="text-center text-gray-400 mt-8">No matches played yet.</p>
             ) : (
                 <div className="flex-grow overflow-y-auto pr-2">
                     <ul className="space-y-2">
-                        {history.map((entry, index) => (
-                            <li key={index} className="flex items-center justify-between bg-gray-800 p-3 rounded-lg border border-gray-700 shadow-md">
-                                <div className="flex flex-col">
-                                    <span className="text-white text-base">vs {entry.opponentUsername}</span>
-                                    <div className="flex items-center space-x-4">
-                                        <span className={`text-sm ${entry.goldChange > 0 ? 'text-green-400' : entry.goldChange < 0 ? 'text-red-400' : 'text-gray-400'}`}>
-                                            💰 {entry.goldChange >= 0 ? '+' : ''}{entry.goldChange.toLocaleString()}
-                                        </span>
-                                        <span className={`text-xs font-semibold ${entry.rankPointsChange > 0 ? 'text-blue-400' : entry.rankPointsChange < 0 ? 'text-purple-400' : 'text-gray-400'}`}>
-                                            {entry.rankPointsChange >= 0 ? '+' : ''}{entry.rankPointsChange} RP
-                                        </span>
-                                    </div>
+                        {history.map(match => (
+                            <li key={match.id} className={`flex items-center justify-between p-3 rounded-lg border-l-4 ${match.result === 'win' ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10'}`}>
+                                <div>
+                                    <p className="font-bold text-white">vs {match.opponentName}</p>
+                                    <p className="text-xs text-gray-400">{new Date(match.timestamp).toLocaleString()}</p>
                                 </div>
-                                {getResultIndicator(entry.result)}
+                                <div className="text-right">
+                                     <p className={`font-bold ${match.result === 'win' ? 'text-green-400' : 'text-red-400'}`}>
+                                        {match.result.toUpperCase()}
+                                    </p>
+                                    <p className={`text-sm font-semibold ${match.rankPointsChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                        {match.rankPointsChange >= 0 ? `+${match.rankPointsChange}` : match.rankPointsChange} RP
+                                    </p>
+                                </div>
                             </li>
                         ))}
                     </ul>

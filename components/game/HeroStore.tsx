@@ -1,94 +1,68 @@
 import React from 'react';
-import { Player } from '../../types';
-import { HEROES, Hero } from '../../gameConfig';
+// FIX: Changed import for Hero type from gameConfig.ts to types.ts to resolve module scope issue.
+import { Player, Hero } from '../../types';
+import { HEROES } from '../../gameConfig';
 
 interface HeroStoreProps {
     player: Player;
-    onBuyHero: (hero: Hero & { id: string }) => void;
-    onEquipHero: (heroId: string) => void;
-    onBack: () => void;
+    onBuyHero: (hero: Hero) => void;
 }
 
-const HeroStore: React.FC<HeroStoreProps> = ({ player, onBuyHero, onEquipHero, onBack }) => {
+const HeroStore: React.FC<HeroStoreProps> = ({ player, onBuyHero }) => {
+    const allHeroes = Object.values(HEROES);
 
-    const allHeroes = Object.entries(HEROES).map(([id, heroData]) => ({ id, ...heroData }));
-
-    const HeroCard: React.FC<{ hero: Hero & { id: string } }> = ({ hero }) => {
-        const ownsHero = player.inventory.heroes.includes(hero.id);
-        const isEquipped = player.equipment.equippedHero === hero.id;
-        const canAfford = player.gems >= hero.cost;
+    const HeroCard: React.FC<{ hero: Hero }> = ({ hero }) => {
+        const ownsHero = player.ownedHeroes.includes(hero.id);
+        const canAffordGold = player.gold >= hero.cost.gold;
+        const canAffordDiamonds = player.diamonds >= hero.cost.diamonds;
+        const purchaseWithGold = hero.cost.gold > 0;
 
         const handleBuy = () => {
-            if (!ownsHero && canAfford) {
+            if (!ownsHero && (purchaseWithGold ? canAffordGold : canAffordDiamonds)) {
                 onBuyHero(hero);
             }
         };
 
-        const handleEquip = () => {
-            if (ownsHero && !isEquipped) {
-                onEquipHero(hero.id);
-            }
-        };
-
         const rarityStyles = {
-            common: {
-                borderColor: 'border-gray-700',
-                textColor: 'text-gray-300',
-                shadow: ''
-            },
-            rare: {
-                borderColor: 'border-blue-500',
-                textColor: 'text-blue-400',
-                shadow: 'shadow-lg shadow-blue-500/20'
-            },
-            legendary: {
-                borderColor: 'border-purple-500',
-                textColor: 'text-purple-400',
-                shadow: 'shadow-lg shadow-purple-500/30'
-            },
+            Fighter: 'border-red-500',
+            Mage: 'border-blue-500',
+            Marksman: 'border-yellow-500',
+            Tank: 'border-green-500',
         };
-        const styles = rarityStyles[hero.rarity];
 
         return (
-            <div className={`bg-gray-800 p-4 rounded-lg border-2 flex flex-col text-center transition-all ${styles.borderColor} ${styles.shadow}`}>
-                <span className="text-5xl mb-2">{hero.emoji}</span>
-                <h4 className={`text-lg mb-1 font-bold ${styles.textColor}`}>{hero.name}</h4>
-                <p className={`uppercase text-xs font-bold mb-1 ${styles.textColor}`}>{hero.rarity}</p>
-                <p className="text-gray-300 text-sm mb-2">Power: +{((hero.powerMultiplier - 1) * 100).toFixed(0)}%</p>
-                <p className="text-green-400 text-xs h-8 mb-2 flex items-center justify-center">
-                    {hero.secondaryBuff?.description || <>&nbsp;</>}
-                </p>
-                <div className="flex-grow"></div>
-                {ownsHero ? (
-                    <button
-                        onClick={handleEquip}
-                        disabled={isEquipped}
-                        className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg border-b-4 border-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:border-gray-700 disabled:text-gray-400"
-                    >
-                        {isEquipped ? 'Equipped' : 'Equip'}
-                    </button>
-                ) : (
-                    <button
-                        onClick={handleBuy}
-                        disabled={!canAfford}
-                        className="w-full bg-green-500 hover:bg-green-600 text-black font-bold py-2 px-4 rounded-lg border-b-4 border-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:border-gray-700 disabled:text-gray-400 flex items-center justify-center"
-                    >
-                        💎 {hero.cost.toLocaleString()}
-                    </button>
-                )}
+            <div className={`bg-gray-800 rounded-lg border-2 flex flex-col text-center transition-transform hover:scale-105 shadow-lg ${rarityStyles[hero.role]}`}>
+                <img src={hero.skins[0].fullUrl} alt={hero.name} className="rounded-t-md object-cover h-40" />
+                <div className="p-3 flex flex-col flex-grow">
+                    <h4 className={`text-lg mb-1 font-bold text-white`}>{hero.name}</h4>
+                    <p className={`text-xs font-bold mb-2 text-gray-400`}>{hero.role}</p>
+                    <div className="flex-grow"></div>
+                    {ownsHero ? (
+                        <button
+                            disabled={true}
+                            className="w-full mt-2 bg-gray-600 text-gray-400 font-bold py-2 px-4 rounded-lg cursor-not-allowed"
+                        >
+                            Owned
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleBuy}
+                            disabled={!(purchaseWithGold ? canAffordGold : canAffordDiamonds)}
+                            className="w-full mt-2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-4 rounded-lg border-b-4 border-yellow-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:border-gray-700 disabled:text-gray-400 flex items-center justify-center"
+                        >
+                            {purchaseWithGold ? `💰 ${hero.cost.gold.toLocaleString()}` : `💎 ${hero.cost.diamonds.toLocaleString()}`}
+                        </button>
+                    )}
+                </div>
             </div>
         );
     };
 
     return (
-        <div className="w-full max-w-3xl h-full flex flex-col bg-black bg-opacity-60 p-4 rounded-xl border-2 border-yellow-600 relative">
-            <button onClick={onBack} className="absolute top-3 left-3 text-2xl bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors transform hover:scale-110 z-10">
-                ⬅️
-            </button>
-            <h3 className="text-center text-2xl text-yellow-300 mb-4">HERO SHRINE</h3>
-
+        <div className="w-full h-full flex flex-col bg-black bg-opacity-70 p-4 rounded-xl border-2 border-purple-600">
+            <h3 className="text-center text-3xl font-bold text-yellow-300 mb-6">HEROES</h3>
             <div className="flex-grow overflow-y-auto pr-2">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {allHeroes.map(hero => <HeroCard key={hero.id} hero={hero} />)}
                 </div>
             </div>

@@ -1,5 +1,5 @@
 {
-  "name": "Click2Mine – The Gold Rush",
-  "description": "A complete web-based mining game named Click2Mine – The Gold Rush, built using React and TypeScript with Firebase Realtime Database integration. Features a player interface and an admin panel.",
+  "name": "Battle Legends: Nexus Siege",
+  "description": "A 1v1 fast-paced MOBA where legendary heroes battle for control of the lane. Destroy the enemy Nexus to achieve victory, climb the ranks, and become a legend.",
   "requestFramePermissions": []
 }

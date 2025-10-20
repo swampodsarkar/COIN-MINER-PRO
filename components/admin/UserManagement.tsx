@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { database } from '../../services/firebase';
 import { Player } from '../../types';
@@ -12,7 +11,7 @@ const UserManagement: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [editingUser, setEditingUser] = useState<Player | null>(null);
     const [editGold, setEditGold] = useState(0);
-    const [editGems, setEditGems] = useState(0);
+    const [editDiamonds, setEditDiamonds] = useState(0);
 
     useEffect(() => {
         const usersRef = database.ref('users');
@@ -40,15 +39,15 @@ const UserManagement: React.FC = () => {
 
     const openEditModal = (user: Player) => {
         setEditingUser(user);
-        setEditGold(user.gold);
-        setEditGems(user.gems);
+        setEditGold(user.gold ?? 0);
+        setEditDiamonds(user.diamonds ?? 0);
     };
     
     const handleSaveChanges = () => {
         if (!editingUser) return;
         database.ref(`users/${editingUser.uid}`).update({
             gold: Number(editGold),
-            gems: Number(editGems),
+            diamonds: Number(editDiamonds),
         });
         setEditingUser(null);
     };
@@ -71,7 +70,7 @@ const UserManagement: React.FC = () => {
                             <th className="p-2">Username</th>
                             <th className="p-2">Email</th>
                             <th className="p-2">Gold</th>
-                            <th className="p-2">Gems</th>
+                            <th className="p-2">Diamonds</th>
                             <th className="p-2">Status</th>
                             <th className="p-2">Actions</th>
                         </tr>
@@ -81,8 +80,8 @@ const UserManagement: React.FC = () => {
                             <tr key={user.uid} className="border-b border-gray-700 hover:bg-gray-700">
                                 <td className="p-2">{user.username}</td>
                                 <td className="p-2">{user.email}</td>
-                                <td className="p-2">{Math.floor(user.gold).toLocaleString()}</td>
-                                <td className="p-2">{user.gems.toLocaleString()}</td>
+                                <td className="p-2">{Math.floor(user.gold ?? 0).toLocaleString()}</td>
+                                <td className="p-2">{(user.diamonds ?? 0).toLocaleString()}</td>
                                 <td className="p-2">{user.banned ? <span className="text-red-500">Banned</span> : <span className="text-green-500">Active</span>}</td>
                                 <td className="p-2 space-x-2">
                                     <button onClick={() => openEditModal(user)} className="text-blue-400 hover:text-blue-300 text-sm">Edit</button>
@@ -103,8 +102,8 @@ const UserManagement: React.FC = () => {
                             <input type="number" value={editGold} onChange={e => setEditGold(Number(e.target.value))} className="w-full bg-gray-700 p-2 rounded" />
                         </div>
                          <div>
-                            <label className="block text-sm text-gray-400">Gems</label>
-                            <input type="number" value={editGems} onChange={e => setEditGems(Number(e.target.value))} className="w-full bg-gray-700 p-2 rounded" />
+                            <label className="block text-sm text-gray-400">Diamonds</label>
+                            <input type="number" value={editDiamonds} onChange={e => setEditDiamonds(Number(e.target.value))} className="w-full bg-gray-700 p-2 rounded" />
                         </div>
                         <button onClick={handleSaveChanges} className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 rounded">Save Changes</button>
                     </div>

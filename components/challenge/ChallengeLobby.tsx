@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Player } from '../../types';
 import { RANKS } from '../../gameConfig';
@@ -12,19 +11,19 @@ interface ChallengeLobbyProps {
 
 const ChallengeLobby: React.FC<ChallengeLobbyProps> = ({ player, onFindMatch, onShowHistory, onBack }) => {
     
-    const rankConfig = RANKS[player.rank];
+    const rankConfig = RANKS[player.rank] || RANKS.Warrior;
 
     return (
-        <div className="w-full max-w-3xl h-full flex flex-col bg-black bg-opacity-60 p-4 sm:p-6 rounded-xl border-2 border-yellow-600 relative">
+        <div className="w-full max-w-3xl h-full flex flex-col bg-black bg-opacity-60 p-4 sm:p-6 rounded-xl border-2 border-purple-600 relative">
             <button onClick={onBack} className="absolute top-3 left-3 text-2xl bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors transform hover:scale-110">
                 ⬅️
             </button>
-            <h3 className="text-center text-xl sm:text-2xl text-yellow-300 mb-4">RANK MATCH</h3>
-            <p className="text-center text-gray-300 text-sm sm:text-base mb-6">Battle another player in a 15-second mining duel to climb the ranks. Winner takes a gold prize and Rank Points!</p>
+            <h3 className="text-center text-xl sm:text-2xl font-bold text-yellow-300 mb-4">RANKED MATCH</h3>
+            <p className="text-center text-gray-300 text-sm sm:text-base mb-6">Challenge another player in a 15-second duel to destroy their Nexus. Winner takes all the glory, gold, and Rank Points!</p>
             
             <div className="w-full max-w-sm mx-auto flex flex-col items-center">
                  <div className="mb-6 text-center">
-                    <p className="text-gray-400">YOUR RANK</p>
+                    <p className="text-gray-400 uppercase tracking-widest">Your Rank</p>
                     <p className="text-4xl font-bold" style={{ color: rankConfig.color }}>{player.rank}</p>
                     <p className="text-sm text-gray-200">{player.rankPoints} RP</p>
                 </div>

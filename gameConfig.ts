@@ -1,122 +1,65 @@
-import { Rank } from './types';
+// FIX: Added type imports and defined RANKS and HEROES constants.
+import { Hero, Rank } from './types';
 
-export interface Axe {
-    id: string;
-    name: string;
-    type: 'normal' | 'rare';
-    power: number;
-    cost: number;
-    currency: 'gold' | 'gems';
-    emoji: string;
-}
-
-export interface Hero {
-    id: string;
-    name: string;
-    rarity: 'common' | 'rare' | 'legendary';
-    cost: number; // in gems
-    powerMultiplier: number;
-    secondaryBuff?: {
-        description: string;
-        gemDropChance?: number; // e.g. 0.02 for 2%
-    };
-    emoji: string;
-}
-
-export const RANKS: Record<Rank, { minRP: number, maxRP: number, color: string, stakeRange: [number, number], rpChange: [number, number] }> = {
-    Bronze:   { minRP: 0,    maxRP: 99,   color: '#cd7f32', stakeRange: [10, 50],   rpChange: [10, -8] },
-    Silver:   { minRP: 100,  maxRP: 299,  color: '#c0c0c0', stakeRange: [50, 150],  rpChange: [10, -8] },
-    Gold:     { minRP: 300,  maxRP: 599,  color: '#ffd700', stakeRange: [150, 400], rpChange: [12, -10] },
-    Platinum: { minRP: 600,  maxRP: 999,  color: '#e5e4e2', stakeRange: [400, 1000], rpChange: [12, -10] },
-    Diamond:  { minRP: 1000, maxRP: 1499, color: '#b9f2ff', stakeRange: [1000, 2500],rpChange: [15, -12] },
-    Heroic:   { minRP: 1500, maxRP: Infinity, color: '#ff4500', stakeRange: [2500, 5000],rpChange: [15, -12] },
+export const RANKS: Record<Rank, { color: string, pointsToAdvance: number | null }> = {
+    Warrior: { color: '#a1a1aa', pointsToAdvance: 100 },
+    Elite: { color: '#78716c', pointsToAdvance: 200 },
+    Master: { color: '#f59e0b', pointsToAdvance: 300 },
+    Grandmaster: { color: '#ef4444', pointsToAdvance: 400 },
+    Epic: { color: '#a855f7', pointsToAdvance: 500 },
+    Legend: { color: '#ec4899', pointsToAdvance: 600 },
+    Mythic: { color: '#3b82f6', pointsToAdvance: null }, // Highest rank
 };
 
-export const getRankFromRP = (rp: number): Rank => {
-    if (rp < 100) return 'Bronze';
-    if (rp < 300) return 'Silver';
-    if (rp < 600) return 'Gold';
-    if (rp < 1000) return 'Platinum';
-    if (rp < 1500) return 'Diamond';
-    return 'Heroic';
-};
+const CDN_BASE = 'https://firebasestorage.googleapis.com/v0/b/gen-z-airdrop.appspot.com/o';
 
-export const AXES: Record<string, Omit<Axe, 'id'>> = {
-    'stone_axe': { name: 'Stone Axe', type: 'normal', power: 1, cost: 0, currency: 'gold', emoji: '🪨' },
-    'copper_pickaxe': { name: 'Copper Pickaxe', type: 'normal', power: 2, cost: 250, currency: 'gold', emoji: '⛏️' },
-    'iron_pickaxe': { name: 'Iron Pickaxe', type: 'normal', power: 5, cost: 1000, currency: 'gold', emoji: '🔩' },
-    'gold_pickaxe': { name: 'Gold Pickaxe', type: 'normal', power: 10, cost: 5000, currency: 'gold', emoji: '⭐' },
-    'diamond_pickaxe': { name: 'Diamond Pickaxe', type: 'normal', power: 20, cost: 20000, currency: 'gold', emoji: '💎' },
-
-    'amethyst_axe': { name: 'Amethyst Axe', type: 'rare', power: 30, cost: 50, currency: 'gems', emoji: '🔮' },
-    'ruby_smasher': { name: 'Ruby Smasher', type: 'rare', power: 50, cost: 150, currency: 'gems', emoji: '🩸' },
-    'cosmic_drill': { name: 'Cosmic Drill', type: 'rare', power: 100, cost: 300, currency: 'gems', emoji: '🌌' },
-};
-
-export const HEROES: Record<string, Omit<Hero, 'id'>> = {
-    'dwarven_smith': { 
-        name: 'Dwarven Smith', 
-        rarity: 'common',
-        cost: 500, 
-        powerMultiplier: 1.1, // 10% boost
-        emoji: '🛠️' 
+export const HEROES: Record<string, Hero> = {
+    toro: {
+        id: 'toro',
+        name: 'Toro',
+        role: 'Tank',
+        cost: { gold: 0, diamonds: 0 },
+        skins: [{
+            id: 'toro_default',
+            name: 'Default',
+            fullUrl: `${CDN_BASE}/heroes%2Ftoro_full.png?alt=media&token=e858079a-14a0-4565-be33-313837f40778`,
+            iconUrl: `${CDN_BASE}/heroes%2Ftoro_icon.png?alt=media&token=e9597c27-1c23-44c1-9d22-26a1b827e69f`
+        }]
     },
-    'rock_golem': { 
-        name: 'Rock Golem',
-        rarity: 'rare',
-        cost: 600, 
-        powerMultiplier: 1.25, // 25% boost
-        secondaryBuff: {
-            description: "+2% Gem Drop Chance",
-            gemDropChance: 0.02
-        },
-        emoji: '🗿' 
+    valhein: {
+        id: 'valhein',
+        name: 'Valhein',
+        role: 'Marksman',
+        cost: { gold: 3000, diamonds: 0 },
+        skins: [{
+            id: 'valhein_default',
+            name: 'Default',
+            fullUrl: `${CDN_BASE}/heroes%2Fvalhein_full.png?alt=media&token=1d74c0b4-3588-4672-8417-09b757e31b79`,
+            iconUrl: `${CDN_BASE}/heroes%2Fvalhein_icon.png?alt=media&token=2d4d80a1-a64e-4f73-9556-9d107297e682`
+        }]
     },
-    'crystal_king': { 
-        name: 'Crystal King', 
-        rarity: 'legendary',
-        cost: 999, 
-        powerMultiplier: 1.5, // 50% boost
-        secondaryBuff: {
-            description: "+5% Gem Drop Chance",
-            gemDropChance: 0.05
-        },
-        emoji: '👑' 
+    veera: {
+        id: 'veera',
+        name: 'Veera',
+        role: 'Mage',
+        cost: { gold: 3000, diamonds: 0 },
+        skins: [{
+            id: 'veera_default',
+            name: 'Default',
+            fullUrl: `${CDN_BASE}/heroes%2Fveera_full.png?alt=media&token=b3f6847a-24a9-4b68-80e2-66236b35e8d9`,
+            iconUrl: `${CDN_BASE}/heroes%2Fveera_icon.png?alt=media&token=07c24f5a-c4f4-4a25-83e0-63116a4b162f`
+        }]
     },
+    zuka: {
+        id: 'zuka',
+        name: 'Zuka',
+        role: 'Fighter',
+        cost: { gold: 0, diamonds: 500 },
+        skins: [{
+            id: 'zuka_default',
+            name: 'Default',
+            fullUrl: `${CDN_BASE}/heroes%2Fzuka_full.png?alt=media&token=6d4a046c-5f80-4963-8a3b-21d3f23a9686`,
+            iconUrl: `${CDN_BASE}/heroes%2Fzuka_icon.png?alt=media&token=592d6e33-2895-4682-a590-0f2c4179e830`
+        }]
+    }
 };
-
-export const AUTO_MINER_CONFIG = {
-    baseCost: 50,
-    costMultiplier: 1.5,
-    baseGoldPerSecond: 0.1,
-};
-
-export const PICKAXE_UPGRADE_CONFIG = {
-    baseCost: 25,
-    costMultiplier: 1.4,
-    powerPerLevel: 0.5,
-};
-
-export const BASE_GEM_DROP_CHANCE = 0.005; // 0.5% base chance
-
-export const LUCK_ROYALE_COST = 50;
-export const LUCK_ROYALE_GUARANTEED_SPINS = 50;
-
-export interface LuckRoyaleReward {
-    type: 'gold' | 'gems' | 'axe';
-    value?: number | string; // amount for gold/gems, axe id for axe
-    weight: number;
-    message: (value: any) => string;
-}
-
-export const LUCK_ROYALE_REWARDS: LuckRoyaleReward[] = [
-    // Common Rewards
-    { type: 'gold', value: 10, weight: 40, message: (v) => `You won ${v} Gold! 💰` },
-    { type: 'gold', value: 25, weight: 20, message: (v) => `You won ${v} Gold! 💰` },
-    { type: 'gems', value: 1, weight: 28, message: (v) => `You found a Gem! 💎` },
-
-    // Rare Rewards
-    { type: 'axe', value: 'amethyst_axe', weight: 7, message: (v) => `RARE DROP! You found the ${AXES[v].name}! ${AXES[v].emoji}` },
-    { type: 'axe', value: 'ruby_smasher', weight: 4, message: (v) => `EPIC DROP! You unearthed the ${AXES[v].name}! ${AXES[v].emoji}` },
-    { type: 'axe', value: 'cosmic_drill', weight: 1, message: (v) => `LEGENDARY! You've discovered the ${AXES[v].name}! ${AXES[v].emoji}` },
-];
