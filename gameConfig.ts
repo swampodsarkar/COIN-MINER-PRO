@@ -11,6 +11,16 @@ export const RANKS: Record<Rank, { color: string, pointsToAdvance: number | null
     Mythic: { color: '#3b82f6', pointsToAdvance: null }, // Highest rank
 };
 
+export const EMBLEM_CONFIG = {
+    maxLevel: 20,
+    // Function to calculate XP needed for the next level
+    xpForNextLevel: (level: number) => 50 * level,
+    // Function to calculate the gold cost for one upgrade action
+    upgradeCost: (level: number) => 25 * level,
+    // How much XP is gained per upgrade click
+    xpPerUpgrade: 10,
+};
+
 export const HEROES: Record<string, Hero> = {
     toro: {
         id: 'toro',
@@ -39,5 +49,26 @@ export const HEROES: Record<string, Hero> = {
         role: 'Fighter',
         emoji: '🐼',
         cost: { gold: 0, diamonds: 500 },
+    },
+    arthur: {
+        id: 'arthur',
+        name: 'Arthur',
+        role: 'Fighter',
+        emoji: '⚔️',
+        cost: { gold: 5000, diamonds: 0 },
+    },
+    butterfly: {
+        id: 'butterfly',
+        name: 'Butterfly',
+        role: 'Assassin',
+        emoji: '🦋',
+        cost: { gold: 8000, diamonds: 0 },
+    },
+    krixi: {
+        id: 'krixi',
+        name: 'Krixi',
+        role: 'Mage',
+        emoji: '🧚',
+        cost: { gold: 0, diamonds: 800 },
     }
 };

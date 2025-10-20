@@ -33,7 +33,7 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ activeView, setActiveView }
             <NavItem label="Home" icon="🏠" view="home" activeView={activeView} onClick={setActiveView} />
             <NavItem label="Heroes" icon="🦸" view="heroes" activeView={activeView} onClick={setActiveView} />
             <NavItem label="Prep" icon="🎒" view="prep" activeView={activeView} onClick={setActiveView} />
-            <NavItem label="Shop" icon="🛍️" view="shop" activeView={activeView} onClick={setActiveView} />
+            <NavItem label="eSports" icon="🏅" view="esports" activeView={activeView} onClick={setActiveView} />
             <NavItem label="Rankings" icon="🏆" view="leaderboard" activeView={activeView} onClick={setActiveView} />
         </nav>
     );

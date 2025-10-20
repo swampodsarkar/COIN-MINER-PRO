@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { database } from '../../services/firebase';
 import { Player, SystemData, Rank, MembershipInfo } from '../../types';
-import { INITIAL_PLAYER_STATE } from '../../constants';
+import { INITIAL_PLAYER_STATE, AVATAR_EMOJIS } from '../../constants';
 import LeaderboardModal from './LeaderboardModal';
 import DailyRewardModal from './DailyRewardModal';
 import EventAnnouncer from './EventAnnouncer';
@@ -13,10 +13,10 @@ import SettingsModal from './SettingsModal';
 import TopUpModal from './TopUpModal';
 import HomeScreen from './HomeScreen';
 import BottomNavBar from './BottomNavBar';
-import { HEROES } from '../../gameConfig';
 import PrepScreen from './PrepScreen';
+import EsportsScreen from './EsportsScreen';
 
-export type GameView = 'home' | 'heroes' | 'prep' | 'shop' | 'leaderboard';
+export type GameView = 'home' | 'heroes' | 'prep' | 'esports' | 'leaderboard';
 
 const daysBetween = (dateStr1: string, dateStr2: string): number => {
     const d1 = new Date(dateStr1);
@@ -56,6 +56,8 @@ const GameScreen: React.FC = () => {
                 diamonds: dbData.diamonds ?? INITIAL_PLAYER_STATE.diamonds,
                 rank: dbData.rank || INITIAL_PLAYER_STATE.rank,
                 ownedHeroes: dbData.ownedHeroes || [...INITIAL_PLAYER_STATE.ownedHeroes],
+                avatar: dbData.avatar || AVATAR_EMOJIS[Math.floor(Math.random() * AVATAR_EMOJIS.length)],
+                equippedEmblem: dbData.equippedEmblem || 'physical',
             };
     
             const todayISO = new Date().toISOString();
@@ -65,6 +67,7 @@ const GameScreen: React.FC = () => {
             if (daysDiff > 0) {
                 let updates: Partial<Player> = { lastLogin: today, dailyRewardClaimed: false };
                 if (daysDiff > 1) { updates.loginStreak = 0; }
+                if (!dbData.avatar) { updates.avatar = playerData.avatar; }
                 await playerDbRef.update(updates);
                 playerData = { ...playerData, ...updates };
             }
@@ -90,6 +93,7 @@ const GameScreen: React.FC = () => {
                 uid: user.uid,
                 username: user.displayName || user.email?.split('@')[0] || 'Player',
                 email: user.email || '',
+                avatar: AVATAR_EMOJIS[Math.floor(Math.random() * AVATAR_EMOJIS.length)],
             };
             await playerDbRef.set(newPlayer);
             setPlayer(newPlayer);
@@ -104,14 +108,6 @@ const GameScreen: React.FC = () => {
         systemRef.on('value', snapshot => setSystem(snapshot.val()));
         return () => systemRef.off();
     }, [initializePlayer]);
-
-    useEffect(() => {
-        if (activeView === 'shop') {
-            setShowTopUpModal(true);
-            // Reset view to home so the modal appears over it
-            setActiveView('home');
-        }
-    }, [activeView]);
 
     const saveData = useCallback(() => {
         if (playerRef.current && user) {
@@ -182,7 +178,9 @@ const GameScreen: React.FC = () => {
             case 'leaderboard':
                 return <LeaderboardModal onBack={() => setActiveView('home')} />;
             case 'prep':
-                return <PrepScreen />;
+                return <PrepScreen player={player!} setPlayer={setPlayer} />;
+            case 'esports':
+                return <EsportsScreen />;
             case 'home':
             default:
                 return <HomeScreen player={player!} onPlay={() => setShowChallengeScreen(true)} />;
@@ -192,8 +190,6 @@ const GameScreen: React.FC = () => {
     if (loading || !player) {
         return <div className="flex items-center justify-center h-screen"><span className="text-2xl">Entering the Battlefield...</span></div>;
     }
-
-    const firstHero = HEROES[player.ownedHeroes[0]] || HEROES.toro;
 
     return (
         <div 
@@ -210,7 +206,7 @@ const GameScreen: React.FC = () => {
              <header className="absolute top-0 left-0 right-0 w-full flex justify-between items-center bg-black bg-opacity-30 p-2 sm:p-3 z-20">
                  <div className="flex items-center space-x-2">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-yellow-400 bg-gray-800 flex items-center justify-center text-3xl">
-                        {firstHero.emoji}
+                        {player.avatar}
                     </div>
                     <div>
                         <p className="text-white text-sm sm:text-lg font-bold">{player.username}</p>

@@ -20,11 +20,13 @@ export interface Player {
     gold: number;
     diamonds: number;
     ownedHeroes: string[];
+    avatar: string; // Player's unique emoji avatar
     emblems: {
         physical: Emblem;
         magical: Emblem;
         tank: Emblem;
     };
+    equippedEmblem: 'physical' | 'magical' | 'tank';
     banned: boolean;
     lastLogin: string; // ISO date string YYYY-MM-DD
     dailyRewardClaimed: boolean;
@@ -58,7 +60,7 @@ export interface Notification {
 export interface Hero {
     id: string;
     name: string;
-    role: 'Fighter' | 'Mage' | 'Marksman' | 'Tank';
+    role: 'Fighter' | 'Mage' | 'Marksman' | 'Tank' | 'Assassin';
     emoji: string;
     cost: {
         gold: number;

@@ -28,6 +28,7 @@ const HeroStore: React.FC<HeroStoreProps> = ({ player, onBuyHero }) => {
             Mage: 'border-blue-500',
             Marksman: 'border-yellow-500',
             Tank: 'border-green-500',
+            Assassin: 'border-purple-500',
         };
 
         return (
