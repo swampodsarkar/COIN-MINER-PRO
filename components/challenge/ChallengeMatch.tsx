@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { database } from '../../services/firebase';
 import { Player, ChallengeMatch, ChallengeHistoryEntry, Rank } from '../../types';

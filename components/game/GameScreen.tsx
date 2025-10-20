@@ -2,10 +2,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { database } from '../../services/firebase';
-import { Player, SystemData, Rank } from '../../types';
+import { Player, SystemData, Rank, MembershipInfo } from '../../types';
 import { INITIAL_PLAYER_STATE } from '../../constants';
 import Miner from './Miner';
-import LeaderboardView from './LeaderboardModal';
+import LeaderboardModal from './LeaderboardModal';
 import DailyRewardModal from './DailyRewardModal';
 import EventAnnouncer from './EventAnnouncer';
 import ChallengeScreen from '../challenge/ChallengeScreen';
@@ -17,8 +17,10 @@ import AutoMinerPanel from './AutoMinerPanel';
 import UpgradePanel from './UpgradePanel';
 import { AXES, HEROES, LUCK_ROYALE_COST, LUCK_ROYALE_GUARANTEED_SPINS, LUCK_ROYALE_REWARDS, Axe, AUTO_MINER_CONFIG, BASE_GEM_DROP_CHANCE, PICKAXE_UPGRADE_CONFIG } from '../../gameConfig';
 import SettingsModal from './SettingsModal';
+import SideNav from './SideNav';
+import TopUpModal from './TopUpModal';
 
-type GameView = 'mine' | 'store' | 'luckRoyale' | 'leaderboard' | 'challenge' | 'heroes';
+export type GameView = 'mine' | 'store' | 'luckRoyale' | 'leaderboard' | 'challenge' | 'heroes';
 
 const daysBetween = (dateStr1: string, dateStr2: string): number => {
     const d1 = new Date(dateStr1);
@@ -42,6 +44,7 @@ const GameScreen: React.FC = () => {
     const [isSpinning, setIsSpinning] = useState(false);
     const [screenShake, setScreenShake] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [showTopUpModal, setShowTopUpModal] = useState(false);
 
     const playerRef = useRef(player);
     playerRef.current = player;
@@ -77,7 +80,8 @@ const GameScreen: React.FC = () => {
         const snapshot = await playerDbRef.get();
         if (snapshot.exists()) {
             let playerData: Player = snapshot.val();
-            const today = new Date().toISOString().split('T')[0];
+            const todayISO = new Date().toISOString();
+            const today = todayISO.split('T')[0];
             
             // Migration for older players
             if (playerData.loginStreak === undefined) playerData.loginStreak = 0;
@@ -92,7 +96,11 @@ const GameScreen: React.FC = () => {
                 playerData.rank = 'Bronze';
                 playerData.rankPoints = 0;
             }
+            if (playerData.activeMembership === undefined) {
+                playerData.activeMembership = null;
+            }
             
+            // Handle daily login streak
             const daysDiff = daysBetween(playerData.lastLogin, today);
     
             if (daysDiff > 0) { // It's a new day
@@ -101,13 +109,46 @@ const GameScreen: React.FC = () => {
                     dailyRewardClaimed: false,
                 };
                 if (daysDiff > 1) {
-                    // Missed a day, streak broken
                     updates.loginStreak = 0;
                 }
                 await playerDbRef.update(updates);
                 playerData = { ...playerData, ...updates };
             }
     
+            // Handle active membership gem rewards
+            if (playerData.activeMembership) {
+                const now = Date.now();
+                if (playerData.activeMembership.expiresAt < now) {
+                    playerData.activeMembership = null; // Membership expired
+                } else {
+                    const todayDate = new Date(today);
+                    const lastClaimedDate = new Date(playerData.activeMembership.lastClaimedDailyGems);
+                    
+                    if (lastClaimedDate < todayDate) {
+                        const gemsPerDay = playerData.activeMembership.type === 'weekly' ? 50 : 80;
+                        let gemsToAdd = 0;
+                        
+                        const loopDate = new Date(lastClaimedDate);
+                        loopDate.setDate(loopDate.getDate() + 1);
+
+                        while (loopDate <= todayDate) {
+                            if (loopDate.getTime() < playerData.activeMembership.expiresAt) {
+                                gemsToAdd += gemsPerDay;
+                            } else {
+                                break;
+                            }
+                            loopDate.setDate(loopDate.getDate() + 1);
+                        }
+
+                        if (gemsToAdd > 0) {
+                            playerData.gems += gemsToAdd;
+                            playerData.activeMembership.lastClaimedDailyGems = today;
+                        }
+                    }
+                }
+            }
+
+
             if (!playerData.dailyRewardClaimed) {
                 setShowDailyReward(true);
             }
@@ -161,6 +202,8 @@ const GameScreen: React.FC = () => {
             database.ref(`leaderboard/${user.uid}`).set({
                 username: playerRef.current.username,
                 gold: playerRef.current.gold,
+                rankPoints: playerRef.current.rankPoints,
+                rank: playerRef.current.rank,
             });
         }
     }, [user]);
@@ -378,6 +421,35 @@ const GameScreen: React.FC = () => {
         setPlayer(p => p ? {...p, rank: newRank, rankPoints: newRankPoints } : null);
     };
 
+    const handleBuyGems = (amount: number) => {
+        setPlayer(p => {
+            if (!p) return null;
+            return { ...p, gems: p.gems + amount };
+        });
+        setShowTopUpModal(false);
+    };
+
+    const handleBuyMembership = (type: 'weekly' | 'monthly', days: number) => {
+        setPlayer(p => {
+            if (!p || p.activeMembership) return p;
+
+            const now = new Date();
+            const expiresAt = new Date(new Date().setDate(now.getDate() + days)).getTime();
+            const todayStr = now.toISOString().split('T')[0];
+            
+            const newMembership: MembershipInfo = {
+                type,
+                expiresAt,
+                lastClaimedDailyGems: todayStr,
+            };
+
+            const gemsPerDay = type === 'weekly' ? 50 : 80;
+
+            return { ...p, gems: p.gems + gemsPerDay, activeMembership: newMembership };
+        });
+        setShowTopUpModal(false);
+    };
+
     const renderView = () => {
         switch(activeView) {
             case 'store':
@@ -387,7 +459,7 @@ const GameScreen: React.FC = () => {
             case 'luckRoyale':
                 return <LuckRoyale player={player!} onSpin={handleSpin} onBack={() => setActiveView('mine')} spinResult={spinResult} clearSpinResult={() => setSpinResult(null)} isSpinning={isSpinning} />;
             case 'leaderboard':
-                return <LeaderboardView onBack={() => setActiveView('mine')} />;
+                return <LeaderboardModal onBack={() => setActiveView('mine')} />;
             case 'challenge':
                 return <ChallengeScreen 
                     player={player!} 
@@ -412,7 +484,7 @@ const GameScreen: React.FC = () => {
                 return (
                     <>
                         <Miner player={player!} onMine={handleMine} system={system} effectiveMiningPower={effectiveMiningPower}/>
-                        <div className="flex flex-row gap-2 sm:gap-4 w-full max-w-sm sm:max-w-md px-4 mt-2">
+                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full max-w-sm sm:max-w-md px-4 mt-2">
                             <AutoMinerPanel 
                                 level={autoMinerLevel}
                                 goldPerSecond={goldPerSecond}
@@ -428,38 +500,6 @@ const GameScreen: React.FC = () => {
                                 onUpgrade={handleUpgradePickaxe}
                             />
                         </div>
-                        <div className="flex items-center justify-center flex-wrap gap-2 sm:gap-4 mt-4">
-                             <button 
-                                onClick={() => setActiveView('store')}
-                                className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-3 sm:py-3 sm:px-6 rounded-lg border-b-4 border-yellow-700 shadow-lg transition-transform active:scale-95 text-sm sm:text-lg transform hover:-translate-y-1 hover:brightness-110"
-                            >
-                                Store 🏪
-                            </button>
-                             <button 
-                                onClick={() => setActiveView('heroes')}
-                                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-3 sm:py-3 sm:px-6 rounded-lg border-b-4 border-green-700 shadow-lg transition-transform active:scale-95 text-sm sm:text-lg transform hover:-translate-y-1 hover:brightness-110"
-                            >
-                                Heroes 🦸
-                            </button>
-                             <button 
-                                onClick={() => setActiveView('luckRoyale')}
-                                className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-3 sm:py-3 sm:px-6 rounded-lg border-b-4 border-purple-700 shadow-lg transition-transform active:scale-95 text-sm sm:text-lg transform hover:-translate-y-1 hover:brightness-110"
-                            >
-                                Luck Royale ✨
-                            </button>
-                            <button 
-                                onClick={() => setActiveView('leaderboard')}
-                                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 sm:py-3 sm:px-6 rounded-lg border-b-4 border-blue-700 shadow-lg transition-transform active:scale-95 text-sm sm:text-lg transform hover:-translate-y-1 hover:brightness-110"
-                            >
-                                Leaders 🏆
-                            </button>
-                             <button 
-                                onClick={() => setActiveView('challenge')}
-                                className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-3 sm:py-3 sm:px-6 rounded-lg border-b-4 border-red-700 shadow-lg transition-transform active:scale-95 text-sm sm:text-lg transform hover:-translate-y-1 hover:brightness-110"
-                            >
-                                Challenge ⚔️
-                            </button>
-                        </div>
                     </>
                 );
         }
@@ -473,41 +513,49 @@ const GameScreen: React.FC = () => {
 
     return (
         <div className={`relative h-full w-full flex flex-col items-center justify-between overflow-hidden ${screenShake ? 'animate-screen-shake' : ''}`}>
-            {showDailyReward && !player.dailyRewardClaimed && <DailyRewardModal loginStreak={player.loginStreak} onClaim={handleClaimDailyReward} onClose={() => setShowDailyReward(false)} />}
-            {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+             {showDailyReward && !player.dailyRewardClaimed && <DailyRewardModal loginStreak={player.loginStreak} onClaim={handleClaimDailyReward} onClose={() => setShowDailyReward(false)} />}
+             {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+             {showTopUpModal && <TopUpModal player={player} onClose={() => setShowTopUpModal(false)} onBuyGems={handleBuyGems} onBuyMembership={handleBuyMembership} />}
 
-            <EventAnnouncer system={system} />
+             <EventAnnouncer system={system} />
 
-            <header className="w-full max-w-5xl flex justify-between items-center bg-black bg-opacity-50 p-2 sm:p-4 rounded-b-xl border-b-2 border-l-2 border-r-2 border-yellow-600">
-                <div className="flex items-center space-x-2 sm:space-x-4 text-sm sm:text-lg">
-                    <div className={`flex items-center bg-gray-800/70 px-2 py-1 sm:px-3 rounded-full border border-yellow-800 ${pulseGold ? 'animate-pulse-update' : ''}`}>
-                        <span className="text-2xl sm:text-3xl mr-2">💰</span>
-                        <span className="text-yellow-400 font-bold">{Math.floor(player.gold).toLocaleString()}</span>
-                    </div>
-                    <div className={`flex items-center bg-gray-800/70 px-2 py-1 sm:px-3 rounded-full border border-blue-800 ${pulseGems ? 'animate-pulse-update' : ''}`}>
-                         <span className="text-2xl sm:text-3xl mr-2">💎</span>
-                        <span className="text-blue-400 font-bold">{player.gems.toLocaleString()}</span>
-                    </div>
-                </div>
-                <div className="flex items-center">
-                    {equippedHero && <span className="text-2xl mr-2" title={`Equipped: ${equippedHero.name}`}>{equippedHero.emoji}</span>}
-                    <p className="text-yellow-300 mr-4 hidden sm:block">{player.username}</p>
-                    <button onClick={() => setShowSettings(true)} className="text-2xl sm:text-3xl mr-3 transform hover:scale-110 transition-transform">
-                        ⚙️
-                    </button>
-                    <button onClick={() => auth.signOut()} className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm py-2 px-3 rounded-lg border-2 border-red-800 transform hover:-translate-y-0.5">Logout</button>
-                </div>
-            </header>
-            
-            <main className="flex-grow w-full flex flex-col items-center justify-center p-4">
-                <div key={activeView} className="w-full h-full flex flex-col items-center justify-center animate-fade-in">
-                    {renderView()}
-                </div>
-            </main>
-            
-             {/* Ad Placeholder */}
-            <div className="w-full max-w-md bg-gray-800 bg-opacity-90 border-t-2 border-yellow-600 rounded-t-xl text-center py-2 text-xs">
-                [BANNER AD PLACEHOLDER]
+            <div className="w-full h-full flex flex-row">
+                 <SideNav activeView={activeView} setActiveView={setActiveView} />
+
+                 <div className="flex-grow flex flex-col">
+                     <header className="w-full flex justify-between items-center bg-black bg-opacity-50 p-2 sm:p-4 rounded-b-xl border-b-2 border-l-2 border-r-2 border-yellow-600">
+                         <div className="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-lg">
+                             <div className={`flex items-center bg-gray-800/70 px-2 py-1 sm:px-3 rounded-full border border-yellow-800 ${pulseGold ? 'animate-pulse-update' : ''}`}>
+                                 <span className="text-xl sm:text-3xl mr-1 sm:mr-2">💰</span>
+                                 <span className="text-yellow-400 font-bold">{Math.floor(player.gold).toLocaleString()}</span>
+                             </div>
+                             <div className={`flex items-center bg-gray-800/70 px-2 py-1 sm:px-3 rounded-full border border-blue-800 ${pulseGems ? 'animate-pulse-update' : ''}`}>
+                                  <span className="text-xl sm:text-3xl mr-1 sm:mr-2">💎</span>
+                                 <span className="text-blue-400 font-bold">{player.gems.toLocaleString()}</span>
+                                 <button onClick={() => setShowTopUpModal(true)} className="ml-2 bg-green-500 hover:bg-green-600 rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-white font-bold text-sm transform transition-transform hover:scale-110">+</button>
+                             </div>
+                         </div>
+                         <div className="flex items-center">
+                             {equippedHero && <span className="text-2xl mr-2" title={`Equipped: ${equippedHero.name}`}>{equippedHero.emoji}</span>}
+                             <p className="text-yellow-300 mr-4 hidden sm:block">{player.username}</p>
+                             <button onClick={() => setShowSettings(true)} className="text-2xl sm:text-3xl mr-2 sm:mr-3 transform hover:scale-110 transition-transform">
+                                 ⚙️
+                             </button>
+                             <button onClick={() => auth.signOut()} className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm py-1 px-2 sm:py-2 sm:px-3 rounded-lg border-2 border-red-800 transform hover:-translate-y-0.5">Logout</button>
+                         </div>
+                     </header>
+                    
+                     <main className="flex-grow w-full flex flex-col items-center justify-center p-2 sm:p-4">
+                         <div key={activeView} className="w-full h-full flex flex-col items-center justify-center animate-fade-in">
+                             {renderView()}
+                         </div>
+                     </main>
+                    
+                      {/* Ad Placeholder */}
+                     <div className="w-full bg-gray-800 bg-opacity-90 border-t-2 border-yellow-600 rounded-t-xl text-center py-1 sm:py-2 text-xs">
+                         [BANNER AD PLACEHOLDER]
+                     </div>
+                 </div>
             </div>
         </div>
     );

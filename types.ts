@@ -1,5 +1,11 @@
 export type Rank = 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | 'Diamond' | 'Heroic';
 
+export interface MembershipInfo {
+    type: 'weekly' | 'monthly';
+    expiresAt: number; // Timestamp
+    lastClaimedDailyGems: string; // YYYY-MM-DD
+}
+
 export interface Player {
     uid: string;
     username: string;
@@ -24,12 +30,15 @@ export interface Player {
     activeMatch?: string | null;
     rank: Rank;
     rankPoints: number;
+    activeMembership?: MembershipInfo | null;
 }
 
 export interface LeaderboardEntry {
     uid: string;
     username: string;
     gold: number;
+    rankPoints: number;
+    rank: Rank;
 }
 
 export interface GameConfig {

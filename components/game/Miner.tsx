@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Player, SystemData } from '../../types';
 import { AXES } from '../../gameConfig';
@@ -168,7 +169,7 @@ const Miner: React.FC<MinerProps> = ({ player, onMine, system, effectiveMiningPo
                         />
                     );
                 })}
-                <button onClick={handleMineClick} className="w-64 h-64 bg-gray-700 rounded-full border-8 border-yellow-600 flex items-center justify-center focus:outline-none transition-transform duration-100 active:scale-95">
+                <button onClick={handleMineClick} className="w-48 h-48 sm:w-64 sm:h-64 bg-gray-700 rounded-full border-8 border-yellow-600 flex items-center justify-center focus:outline-none transition-transform duration-100 active:scale-95">
                     <span 
                         className={`text-7xl transition-transform duration-300 ${isMining ? 'animate-pickaxe-mine' : 'transform rotate-10'}`}
                     >

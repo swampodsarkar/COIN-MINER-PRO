@@ -25,4 +25,5 @@ export const INITIAL_PLAYER_STATE: Omit<Player, 'uid' | 'username' | 'email'> = 
     loginStreak: 0,
     rank: 'Bronze',
     rankPoints: 0,
+    activeMembership: null,
 };

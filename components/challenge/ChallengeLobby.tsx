@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Player } from '../../types';
 import { RANKS } from '../../gameConfig';
@@ -18,7 +19,7 @@ const ChallengeLobby: React.FC<ChallengeLobbyProps> = ({ player, onFindMatch, on
             <button onClick={onBack} className="absolute top-3 left-3 text-2xl bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors transform hover:scale-110">
                 ⬅️
             </button>
-            <h3 className="text-center text-xl sm:text-2xl text-yellow-300 mb-4">RANKED MATCH</h3>
+            <h3 className="text-center text-xl sm:text-2xl text-yellow-300 mb-4">RANK MATCH</h3>
             <p className="text-center text-gray-300 text-sm sm:text-base mb-6">Battle another player in a 15-second mining duel to climb the ranks. Winner takes a gold prize and Rank Points!</p>
             
             <div className="w-full max-w-sm mx-auto flex flex-col items-center">
