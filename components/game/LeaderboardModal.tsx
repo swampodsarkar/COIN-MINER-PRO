@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { database } from '../../services/firebase';
 import { LeaderboardEntry } from '../../types';
 import { Spinner } from '../ui/Spinner';
-import { RANKS } from '../../gameConfig';
+// FIX: Use DIVISIONS config which is available, instead of RANKS which is not.
+import { DIVISIONS } from '../../gameConfig';
 
 interface LeaderboardProps {
     onBack: () => void;
@@ -14,7 +14,8 @@ const LeaderboardModal: React.FC<LeaderboardProps> = ({ onBack }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const leaderboardRef = database.ref('leaderboard').orderByChild('rankPoints').limitToLast(100);
+        // FIX: Order by 'divisionPoints' which exists on the LeaderboardEntry type.
+        const leaderboardRef = database.ref('leaderboard').orderByChild('divisionPoints').limitToLast(100);
         leaderboardRef.once('value', snapshot => {
             const data: { [key: string]: LeaderboardEntry } = snapshot.val();
             if (data) {
@@ -22,10 +23,12 @@ const LeaderboardModal: React.FC<LeaderboardProps> = ({ onBack }) => {
                     .map(key => ({
                         uid: key,
                         username: data[key].username,
-                        rankPoints: data[key].rankPoints || 0,
-                        rank: data[key].rank || 'Bronze',
+                        // FIX: Use 'divisionPoints' and 'division' which exist on LeaderboardEntry type.
+                        divisionPoints: data[key].divisionPoints || 0,
+                        division: data[key].division || 'Division 10',
                     }))
-                    .sort((a, b) => b.rankPoints - a.rankPoints);
+                    // FIX: Sort by 'divisionPoints'.
+                    .sort((a, b) => b.divisionPoints - a.divisionPoints);
                 setLeaderboard(sortedData);
             }
             setLoading(false);
@@ -44,18 +47,21 @@ const LeaderboardModal: React.FC<LeaderboardProps> = ({ onBack }) => {
                 <div className="flex-grow overflow-y-auto pr-2">
                     <ul className="space-y-2">
                         {leaderboard.map((entry, index) => {
-                             const rankConfig = RANKS[entry.rank] || RANKS.Bronze;
+                             // FIX: Use DIVISIONS config to get division color.
+                             const divisionConfig = DIVISIONS[entry.division] || DIVISIONS['Division 10'];
                              return (
                                 <li key={entry.uid} className="flex items-center justify-between bg-gray-800 p-3 rounded-lg border border-gray-700 shadow-md">
                                     <div className="flex items-center">
                                         <span className={`font-bold w-10 text-lg ${index < 3 ? 'text-orange-400' : 'text-gray-400'}`}>{index + 1}.</span>
                                         <div className="flex flex-col ml-2">
                                             <span className="text-white text-lg font-semibold">{entry.username}</span>
-                                            <span className="text-xs font-bold" style={{ color: rankConfig.color }}>{entry.rank}</span>
+                                            {/* FIX: Display division name with its color. */}
+                                            <span className="text-xs font-bold" style={{ color: divisionConfig.color }}>{entry.division}</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center bg-gray-900/50 px-3 py-1 rounded-full">
-                                        <span className="text-blue-300 font-semibold">{entry.rankPoints.toLocaleString()} RP</span>
+                                        {/* FIX: Display divisionPoints and use "pts" suffix. */}
+                                        <span className="text-blue-300 font-semibold">{entry.divisionPoints.toLocaleString()} pts</span>
                                     </div>
                                 </li>
                              )

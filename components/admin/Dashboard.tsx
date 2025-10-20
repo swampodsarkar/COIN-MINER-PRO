@@ -26,11 +26,13 @@ const Dashboard: React.FC = () => {
             
             setStats({ totalPlayers });
 
-            const leaderboardRef = database.ref('leaderboard').orderByChild('rankPoints').limitToLast(10);
+            // FIX: Order by 'divisionPoints' which exists on the LeaderboardEntry type.
+            const leaderboardRef = database.ref('leaderboard').orderByChild('divisionPoints').limitToLast(10);
             const leaderboardSnapshot = await leaderboardRef.get();
             const leaderboardData = leaderboardSnapshot.val() || {};
             const sortedPlayers = Object.values(leaderboardData as {[key: string]: LeaderboardEntry})
-                .sort((a, b) => (b.rankPoints ?? 0) - (a.rankPoints ?? 0));
+                // FIX: Sort by 'divisionPoints'.
+                .sort((a, b) => (b.divisionPoints ?? 0) - (a.divisionPoints ?? 0));
 
             setTopPlayers(sortedPlayers);
             setLoading(false);
@@ -52,9 +54,10 @@ const Dashboard: React.FC = () => {
                 <h3 className="text-xl text-yellow-300 mb-4">Top 10 Players by Rank</h3>
                 <ul className="space-y-2">
                     {topPlayers.map((player, index) => (
-                        <li key={index} className="flex justify-between items-center bg-gray-700 p-3 rounded">
+                        <li key={player.username} className="flex justify-between items-center bg-gray-700 p-3 rounded">
                             <span>{index + 1}. {player.username}</span>
-                            <span className="text-yellow-400">{Math.floor(player.rankPoints ?? 0).toLocaleString()} RP</span>
+                            {/* FIX: Use 'divisionPoints' and display with "pts" suffix. */}
+                            <span className="text-yellow-400">{Math.floor(player.divisionPoints ?? 0).toLocaleString()} pts</span>
                         </li>
                     ))}
                 </ul>

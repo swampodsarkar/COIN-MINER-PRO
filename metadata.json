@@ -1,7 +1,5 @@
 {
-  "name": "Battle Royale: Survival Grounds",
-  "description": "A fast-paced battle royale game. Drop in, loot up, and be the last one standing. Inspired by Garena Free Fire.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
+  "name": "eFootball Mobile 25",
+  "description": "Build your dream team and compete against players from around the world in this immersive football simulation game. Manage your squad, sign superstars, and climb the divisions to prove you're the best.",
+  "requestFramePermissions": []
 }

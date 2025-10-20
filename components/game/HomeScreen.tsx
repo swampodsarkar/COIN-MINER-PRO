@@ -1,102 +1,63 @@
+
 import React, { useState } from 'react';
 import { Player } from '../../types';
-import { CHARACTERS } from '../../gameConfig';
-import FriendsPanel from './FriendsPanel';
-import { UserGroupIcon } from '../ui/icons';
+import { PLAYERS, FORMATIONS, DIVISIONS } from '../../gameConfig';
 
-interface HomeScreenProps {
+interface MatchSelectionScreenProps {
     player: Player;
-    onPlay: (mode: 'br' | 'cs') => void;
+    onPlay: (mode: 'division' | 'ai') => void;
 }
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ player, onPlay }) => {
-    const [gameMode, setGameMode] = useState<'br' | 'cs'>('br');
-    const [showFriends, setShowFriends] = useState(false);
-    
-    const displayCharacterId = player.ownedCharacters[0] || 'alok';
-    const displayCharacter = CHARACTERS[displayCharacterId];
+const MatchSelectionScreen: React.FC<MatchSelectionScreenProps> = ({ player, onPlay }) => {
+    const [selectedMode, setSelectedMode] = useState<'division' | 'ai'>('division');
 
-    const SquadMemberCard: React.FC<{ member?: { name: string, emoji: string } }> = ({ member }) => {
-        if (!member) {
-            return (
-                <button onClick={() => setShowFriends(true)} className="h-20 w-full bg-black/40 rounded-lg border-2 border-dashed border-gray-600 flex items-center justify-center text-gray-400 hover:bg-black/60 hover:border-orange-500 transition-colors">
-                    <span className="text-3xl">+ INVITE</span>
-                </button>
-            )
-        }
-        return (
-             <div className="h-20 w-full bg-gray-800/80 rounded-lg border-2 border-gray-600 flex items-center p-2">
-                <span className="text-5xl mr-2">{member.emoji}</span>
-                <div>
-                    <p className="font-bold text-white">{member.name}</p>
-                </div>
-            </div>
-        )
-    }
+    const captain = PLAYERS[player.squad[10]] || PLAYERS['std_cf_1']; // Default to CF
+    const division = DIVISIONS[player.division];
 
     return (
         <div className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden">
-            {/* Background Character */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-40 pointer-events-none">
-                 <div className="text-[20rem] sm:text-[26rem] md:text-[32rem] -mb-20 drop-shadow-2xl select-none">
-                    {displayCharacter.emoji}
+             {/* Background Character */}
+             <div className="absolute -right-20 -bottom-20 flex items-center justify-center opacity-30 pointer-events-none">
+                 <div className="text-[28rem] drop-shadow-2xl select-none transform scale-x-[-1]">
+                    ⚽
                 </div>
-            </div>
-
-            {/* Main content */}
-            <div className="relative w-full h-full flex justify-between items-end p-4 sm:p-6">
-                {/* Left Side: Character/Mode select */}
-                <div className="flex flex-col justify-end h-full">
-                     <div className="bg-black/60 p-4 rounded-xl backdrop-blur-sm border border-gray-700 mb-4">
-                        <h2 className="text-3xl font-bold text-white">{displayCharacter.name}</h2>
-                        <p className="text-orange-400 font-semibold">{displayCharacter.role}</p>
-                    </div>
-                    <div className="flex bg-black/60 p-1.5 rounded-full border border-gray-700">
-                        <button 
-                            onClick={() => setGameMode('br')} 
-                            className={`px-6 py-2 rounded-full font-bold transition-colors ${gameMode === 'br' ? 'bg-orange-500 text-black' : 'text-white'}`}
-                        >
-                            Battle Royale
-                        </button>
-                        <button 
-                            onClick={() => setGameMode('cs')}
-                            className={`px-6 py-2 rounded-full font-bold transition-colors ${gameMode === 'cs' ? 'bg-orange-500 text-black' : 'text-white'}`}
-                        >
-                            Clash Squad
-                        </button>
-                    </div>
-                </div>
-
-                {/* Right Side: Squad */}
-                <div className="w-1/3 max-w-xs flex flex-col space-y-2">
-                    <SquadMemberCard member={{ name: player.username, emoji: player.avatar }} />
-                    <SquadMemberCard />
-                    <SquadMemberCard />
-                    <SquadMemberCard />
-                </div>
-            </div>
-
-            {/* Bottom Start Button */}
-            <div className="absolute bottom-6 right-1/2 translate-x-1/2">
-                 <button
-                    onClick={() => onPlay(gameMode)}
-                    className="bg-yellow-400 text-gray-900 font-black text-3xl py-4 px-24 rounded-lg border-b-8 border-yellow-600 shadow-2xl shadow-yellow-500/30 transform transition-transform hover:scale-105 active:scale-100 active:border-b-4"
-                >
-                    START
-                </button>
             </div>
             
-            {/* Friends Panel Toggle */}
-            <button 
-                onClick={() => setShowFriends(true)} 
-                className="absolute top-24 right-4 bg-black/60 p-3 rounded-full hover:bg-orange-500 transition-colors z-20"
-            >
-                <UserGroupIcon className="h-8 w-8 text-white"/>
-            </button>
-            
-            {showFriends && <FriendsPanel onClose={() => setShowFriends(false)} />}
+            <div className="relative w-full h-full flex flex-col justify-between p-4 sm:p-6 text-white">
+                {/* Top section for team info */}
+                <div className="bg-black/50 p-4 rounded-xl backdrop-blur-sm border border-gray-700 w-full max-w-sm">
+                    <h2 className="text-2xl font-bold">{player.username}'s Team</h2>
+                    <p className="font-semibold" style={{ color: division.color }}>{division.name}</p>
+                    <p className="text-sm text-gray-300">Captain: {captain.name}</p>
+                </div>
+
+                {/* Bottom section for mode selection and play button */}
+                <div className="flex flex-col items-center">
+                    <div className="flex bg-black/60 p-1.5 rounded-full border border-gray-700 mb-6">
+                        <button 
+                            onClick={() => setSelectedMode('division')} 
+                            className={`px-6 py-2 rounded-full font-bold transition-colors w-40 ${selectedMode === 'division' ? 'bg-cyan-500 text-black' : 'text-white'}`}
+                        >
+                            Division Match
+                        </button>
+                        <button 
+                            onClick={() => setSelectedMode('ai')}
+                            className={`px-6 py-2 rounded-full font-bold transition-colors w-40 ${selectedMode === 'ai' ? 'bg-cyan-500 text-black' : 'text-white'}`}
+                        >
+                            Tour Event
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={() => onPlay(selectedMode)}
+                        className="bg-green-500 text-gray-900 font-black text-3xl py-4 px-24 rounded-lg border-b-8 border-green-700 shadow-2xl shadow-green-500/30 transform transition-transform hover:scale-105 active:scale-100 active:border-b-4"
+                    >
+                        PLAY
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
 
-export default HomeScreen;
+export default MatchSelectionScreen;

@@ -1,56 +1,54 @@
-export type Rank = 'Bronze' | 'Silver' | 'Gold' | 'Platinum' | 'Diamond' | 'Heroic' | 'Grandmaster';
+export type Division =
+    | 'Division 10'
+    | 'Division 9'
+    | 'Division 8'
+    | 'Division 7'
+    | 'Division 6'
+    | 'Division 5'
+    | 'Division 4'
+    | 'Division 3'
+    | 'Division 2'
+    | 'Division 1';
 
-export interface MembershipInfo {
-    type: 'weekly' | 'monthly';
-    startedAt: number;
-    expiresAt: number;
-    lastClaimedDailyDiamonds: string; // ISO date string YYYY-MM-DD
-}
-
-export interface Pet {
+export interface MatchHistory {
     id: string;
-    name: string;
-    emoji: string;
-    cost: {
-        gold: number;
-        diamonds: number;
-    };
-    abilityName: string;
-    abilityDescription: string;
-}
-
-export interface ClanMember {
-    uid: string;
-    username: string;
-    rank: Rank;
-}
-
-export interface Clan {
-    id: string;
-    name: string;
-    tag: string;
-    leaderUid: string;
-    members: Record<string, ClanMember>; // key is player uid
+    result: 'WIN' | 'DEFEAT' | 'DRAW';
+    score: string;
+    mode: 'ai' | 'division';
+    timestamp: number;
+    gpChange: number;
+    divisionPointsChange: number;
 }
 
 export interface Player {
-    uid:string;
+    uid: string;
     username: string;
     email: string;
-    gold: number;
-    diamonds: number;
-    ownedCharacters: string[];
-    avatar: string; // Player's unique emoji avatar
+    gp: number;
+    coins: number;
+    avatar: string;
     banned: boolean;
-    lastLogin: string; // ISO date string YYYY-MM-DD
-    dailyRewardClaimed: boolean;
-    loginStreak: number;
-    rank: Rank;
-    rankPoints: number;
-    activeMembership: MembershipInfo | null;
-    ownedPets: string[];
-    equippedPet: string | null;
-    clanId?: string;
+    lastLogin: string;
+    division: Division;
+    divisionPoints: number;
+    ownedPlayerIds: string[];
+    squad: string[];
+    substitutes: string[];
+    activeFormationId: string;
+    matchHistory: { [key: string]: Omit<MatchHistory, 'id'> };
+    activeMembership?: {
+        type: 'weekly' | 'monthly';
+        startedAt: number;
+        expiresAt: number;
+        lastClaimedDailyDiamonds: string;
+    };
+}
+
+export interface LeaderboardEntry {
+    uid: string;
+    username: string;
+    division: Division;
+    divisionPoints: number;
 }
 
 export interface SystemData {
@@ -61,60 +59,21 @@ export interface SystemData {
     };
 }
 
-export interface LeaderboardEntry {
-    uid: string;
-    username: string;
-    rankPoints: number;
-    rank: Rank;
-}
-
 export interface Notification {
     id: string;
     message: string;
     timestamp: number;
 }
 
-export interface Character {
+export interface PlayerData {
     id: string;
     name: string;
-    role: 'Rusher' | 'Support' | 'Sniper' | 'Scout';
-    emoji: string;
-    cost: {
-        gold: number;
-        diamonds: number;
-    };
-    abilityName: string;
-    abilityDescription: string;
+    position: 'GK' | 'CB' | 'LB' | 'RB' | 'DMF' | 'CMF' | 'AMF' | 'LWF' | 'RWF' | 'SS' | 'CF';
+    overall: number;
+    rarity: 'Standard' | 'Featured' | 'Legendary';
 }
 
-export interface MatchHistory {
-    id: string;
-    placement: number;
-    kills: number;
-    result: 'VICTORY' | 'DEFEAT';
-    rankPointsChange: number;
-    timestamp: number;
-    playerCharacterId: string;
-    mode?: 'br' | 'cs';
-}
-
-export interface Weapon {
-    id: string;
+export interface Formation {
     name: string;
-    tier: number;
-    emoji: string;
-}
-
-export interface Armor {
-    id: string;
-    name: string;
-    tier: number;
-    emoji: string;
-}
-
-export interface Helmet {
-    id: string;
-    name: string;
-    tier: number;
-    emoji: string;
+    positions: string[]; // e.g., ['GK', 'LB', 'CB', 'CB', 'RB', ...]
 }

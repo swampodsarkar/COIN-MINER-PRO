@@ -1,135 +1,122 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Player } from '../../types';
-import { CHARACTERS } from '../../gameConfig';
+import { PLAYERS } from '../../gameConfig';
 
-interface ClashSquadMatchProps {
+interface FootballMatchProps {
     player: Player;
-    onMatchEnd: (result: 'VICTORY' | 'DEFEAT', goldChange: number, rankPointsChange: number, playerCharacterId: string, placement: number, kills: number) => void;
+    opponentStrength: number;
+    onMatchEnd: (result: { result: 'WIN' | 'DEFEAT' | 'DRAW', gpChange: number, divisionPointsChange: number, score: string }) => void;
 }
 
-const GOLD_PER_ROUND_WIN = 50;
-const RP_WIN = 12;
-const RP_LOSS = -8;
+const GP_PER_GOAL = 100;
+const GP_WIN = 1000;
+const GP_DRAW = 400;
+const GP_LOSS = 200;
+const DP_WIN = 3;
+const DP_DRAW = 1;
+const DP_LOSS = 0; // No loss of points in this version
 
-const ClashSquadMatch: React.FC<ClashSquadMatchProps> = ({ player, onMatchEnd }) => {
+const FootballMatch: React.FC<FootballMatchProps> = ({ player, opponentStrength, onMatchEnd }) => {
     const [score, setScore] = useState({ player: 0, enemy: 0 });
-    const [round, setRound] = useState(1);
-    const [log, setLog] = useState<string[]>(['Match Started! First to 4 wins.']);
-    const [roundResult, setRoundResult] = useState<'WON' | 'LOST' | null>(null);
+    const [time, setTime] = useState(0);
+    const [log, setLog] = useState<string[]>(["0' - Kick Off!"]);
     const [isMatchOver, setIsMatchOver] = useState(false);
-    const [totalKills, setTotalKills] = useState(0);
+    
+    const playerTeamStrength = player.squad.reduce((acc, playerId) => acc + (PLAYERS[playerId]?.overall || 75), 0) / 11;
+    const opponentTeamStrength = (opponentStrength / 10) + 70; // Scale opponent strength
 
-    const playerCharacter = CHARACTERS[player.ownedCharacters[0] || 'alok'];
-    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    useEffect(() => {
+        intervalRef.current = setInterval(() => {
+            setTime(t => t + 1);
+        }, 200); // 90 minutes in ~18 seconds
+
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }, []);
 
     useEffect(() => {
         if (isMatchOver) return;
-    
-        const simulateRound = () => {
-            if (score.player >= 4 || score.enemy >= 4) {
-                setIsMatchOver(true);
-                return;
-            }
 
-            setRoundResult(null);
+        // Simulate match event
+        const totalStrength = playerTeamStrength + opponentTeamStrength;
+        const chanceOfEvent = 0.3; // 30% chance of an event each "minute"
 
-            const playerTeamStrength = 50 + (player.rankPoints / 20); // Base strength + rank bonus
-            const enemyTeamStrength = 55; // Slightly tougher enemies
-
-            const roundWinChance = playerTeamStrength / (playerTeamStrength + enemyTeamStrength);
-            const playerWins = Math.random() < roundWinChance;
-            const killsThisRound = Math.floor(Math.random() * 3); // 0, 1, or 2 kills
-            
-            setTotalKills(k => k + killsThisRound);
-
-            timeoutRef.current = setTimeout(() => {
-                setRoundResult(playerWins ? 'WON' : 'LOST');
-                setLog(prev => [`Round ${round} ${playerWins ? 'Won' : 'Lost'}!`, `You got ${killsThisRound} kills.`, ...prev].slice(0, 4));
-                
-                setScore(s => ({
-                    player: s.player + (playerWins ? 1 : 0),
-                    enemy: s.enemy + (playerWins ? 0 : 1),
-                }));
-
-            }, 2000); 
-
-            timeoutRef.current = setTimeout(() => {
-                setRound(r => r + 1);
-            }, 3500);
-        };
-
-        timeoutRef.current = setTimeout(simulateRound, 1500);
-
-        return () => {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        };
-    }, [round, isMatchOver]);
-    
-    useEffect(() => {
-        if (score.player >= 4 || score.enemy >= 4) {
-             if (!isMatchOver) {
-                setIsMatchOver(true);
-                const playerWonMatch = score.player >= 4;
-                const result = playerWonMatch ? 'VICTORY' : 'DEFEAT';
-                const goldChange = score.player * GOLD_PER_ROUND_WIN;
-                const rankPointsChange = playerWonMatch ? RP_WIN : RP_LOSS;
-                const placement = playerWonMatch ? 1 : 2;
-                onMatchEnd(result, goldChange, rankPointsChange, playerCharacter.id, placement, totalKills);
+        if (Math.random() < chanceOfEvent) {
+            const isPlayerEvent = Math.random() < (playerTeamStrength / totalStrength);
+            if (isPlayerEvent) {
+                // Player team event
+                const scorer = PLAYERS[player.squad[Math.floor(Math.random() * 11)]];
+                setLog(prev => [`${time}' - GOAL! ${scorer.name} scores for your team!`, ...prev].slice(0, 5));
+                setScore(s => ({ ...s, player: s.player + 1 }));
+            } else {
+                // Opponent team event
+                setLog(prev => [`${time}' - Goal for the opponent...`, ...prev].slice(0, 5));
+                setScore(s => ({ ...s, enemy: s.enemy + 1 }));
             }
         }
-    }, [score, isMatchOver, onMatchEnd, playerCharacter.id, totalKills]);
 
-    if (isMatchOver) {
-        const playerWonMatch = score.player >= 4;
-        return (
-            <div className="flex flex-col items-center justify-center text-center animate-fade-in">
-                <h1 className={`text-6xl sm:text-8xl font-bold tracking-widest animate-victory ${playerWonMatch ? 'text-orange-400' : 'text-gray-400'}`}>
-                    {playerWonMatch ? 'VICTORY' : 'DEFEAT'}
-                </h1>
-                <p className="mt-4 text-xl text-white">
-                    Final Score: {score.player} - {score.enemy}
-                </p>
-                 <p className="mt-2 text-lg text-gray-300">
-                    Total Kills: {totalKills}
-                </p>
-            </div>
-        )
-    }
+        if (time >= 90) {
+            setIsMatchOver(true);
+            if (intervalRef.current) clearInterval(intervalRef.current);
+
+            const { player: pScore, enemy: eScore } = score;
+            let result: 'WIN' | 'DEFEAT' | 'DRAW';
+            let gpChange = 0;
+            let divisionPointsChange = 0;
+
+            if (pScore > eScore) {
+                result = 'WIN';
+                gpChange = GP_WIN + (pScore * GP_PER_GOAL);
+                divisionPointsChange = DP_WIN;
+            } else if (pScore < eScore) {
+                result = 'DEFEAT';
+                gpChange = GP_LOSS + (pScore * GP_PER_GOAL);
+                divisionPointsChange = DP_LOSS;
+            } else {
+                result = 'DRAW';
+                gpChange = GP_DRAW + (pScore * GP_PER_GOAL);
+                divisionPointsChange = DP_DRAW;
+            }
+
+            setTimeout(() => {
+                onMatchEnd({ result, gpChange, divisionPointsChange, score: `${pScore} - ${eScore}` });
+            }, 2000);
+        }
+    }, [time, isMatchOver]);
+
 
     return (
-        <div className="w-full h-full flex flex-col items-center justify-between bg-black bg-opacity-60 p-4 rounded-xl border-2 border-purple-600 animate-fade-in">
-            <div className="w-full flex justify-between items-center text-white text-center">
-                 <div>
-                    <p className="text-xl font-bold">Your Team</p>
-                    <p className="text-5xl font-bold text-blue-400">{score.player}</p>
+        <div className="w-full h-full flex flex-col items-center justify-between bg-black bg-opacity-60 p-4 rounded-xl border-2 border-cyan-700 animate-fade-in">
+            {/* Scoreboard */}
+            <div className="w-full flex justify-between items-center text-white text-center p-4 bg-gray-900/50 rounded-lg">
+                 <div className="w-1/3">
+                    <p className="text-xl font-bold truncate">{player.username}</p>
                  </div>
-                 <div className="text-2xl font-bold">
-                    <p>Round</p>
-                    <p>{round}</p>
+                 <div className="text-2xl font-bold w-1/3">
+                    <p className="text-5xl">{score.player} - {score.enemy}</p>
+                    <p className="text-2xl mt-1">{time}'</p>
                  </div>
-                 <div>
-                    <p className="text-xl font-bold">Enemy Team</p>
-                    <p className="text-5xl font-bold text-red-400">{score.enemy}</p>
+                 <div className="w-1/3">
+                    <p className="text-xl font-bold">Opponent</p>
                  </div>
             </div>
             
-            <div className="h-40 flex items-center justify-center">
-                {roundResult ? (
-                    <h2 className={`text-5xl font-bold animate-pulse ${roundResult === 'WON' ? 'text-green-400' : 'text-red-500'}`}>
-                        ROUND {roundResult}!
-                    </h2>
-                ) : (
-                     <div className="text-6xl my-8 drop-shadow-lg">
-                        {playerCharacter.emoji}
-                    </div>
-                )}
-            </div>
+            {isMatchOver && (
+                <div className="my-8 text-4xl font-bold text-yellow-400 animate-pulse">
+                    FULL TIME
+                </div>
+            )}
 
-            <div className="w-full h-24 bg-black/30 rounded p-2 text-sm text-gray-300 text-center">
-                {log.map((l, i) => <p key={i} className={i === 0 ? 'text-white animate-fade-in' : 'opacity-50'}>{l}</p>)}
+            {/* Match Log */}
+            <div className="w-full h-48 bg-black/30 rounded p-2 text-sm text-gray-300 text-center flex flex-col-reverse overflow-hidden">
+                {log.map((l, i) => <p key={i} className={i === 0 ? 'text-white animate-fade-in' : 'opacity-60'}>{l}</p>)}
             </div>
         </div>
     );
 };
 
-export default ClashSquadMatch;
+export default FootballMatch;

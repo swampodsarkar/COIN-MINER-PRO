@@ -1,84 +1,123 @@
-import React from 'react';
-import { Player, Pet } from '../../types';
-import { PETS } from '../../gameConfig';
+import React, { useState } from 'react';
+import { Player } from '../../types';
+import { PLAYERS, FORMATIONS } from '../../gameConfig';
 
-interface PetStoreProps {
+interface GamePlanScreenProps {
     player: Player;
     setPlayer: React.Dispatch<React.SetStateAction<Player | null>>;
 }
 
-const PetStore: React.FC<PetStoreProps> = ({ player, setPlayer }) => {
-    const allPets = Object.values(PETS);
+const PlayerCard: React.FC<{ playerId: string, isSelected: boolean, onClick: () => void }> = ({ playerId, isSelected, onClick }) => {
+    const p = PLAYERS[playerId];
+    if (!p) return null;
 
-    const handleBuyPet = (pet: Pet) => {
-        setPlayer(p => {
-            if (!p) return null;
-            const canAffordGold = p.gold >= pet.cost.gold;
-            const canAffordDiamonds = p.diamonds >= pet.cost.diamonds;
-            const purchaseWithGold = pet.cost.gold > 0;
-
-            if (purchaseWithGold && canAffordGold) {
-                return { ...p, gold: p.gold - pet.cost.gold, ownedPets: [...p.ownedPets, pet.id] };
-            }
-            if (!purchaseWithGold && canAffordDiamonds) {
-                return { ...p, diamonds: p.diamonds - pet.cost.diamonds, ownedPets: [...p.ownedPets, pet.id] };
-            }
-            return p;
-        });
-    };
-
-    const handleEquipPet = (petId: string) => {
-        setPlayer(p => p ? { ...p, equippedPet: p.equippedPet === petId ? null : petId } : null);
-    };
-
-    const PetCard: React.FC<{ pet: Pet }> = ({ pet }) => {
-        const ownsPet = player.ownedPets.includes(pet.id);
-        const isEquipped = player.equippedPet === pet.id;
-        const canAffordGold = player.gold >= pet.cost.gold;
-        const canAffordDiamonds = player.diamonds >= pet.cost.diamonds;
-        const purchaseWithGold = pet.cost.gold > 0;
-
-        return (
-            <div className={`bg-gray-800 rounded-lg border-2 flex flex-col text-center transition-transform hover:scale-105 shadow-lg ${isEquipped ? 'border-green-400' : 'border-purple-500'}`}>
-                <div className="rounded-t-md h-40 bg-gray-900 flex items-center justify-center">
-                    <span className="text-7xl">{pet.emoji}</span>
-                </div>
-                <div className="p-3 flex flex-col flex-grow">
-                    <h4 className="text-lg mb-1 font-bold text-white">{pet.name}</h4>
-                    <p className="text-xs font-bold mb-2 text-green-400">{pet.abilityName}</p>
-                    <p className="text-xs text-gray-300 mb-2 h-10">"{pet.abilityDescription}"</p>
-                    <div className="flex-grow"></div>
-                    {ownsPet ? (
-                        <button
-                            onClick={() => handleEquipPet(pet.id)}
-                            className={`w-full mt-2 font-bold py-2 px-4 rounded-lg border-b-4 transition-colors ${isEquipped ? 'bg-green-500 border-green-700 text-white' : 'bg-gray-600 border-gray-700 text-white hover:bg-gray-500'}`}
-                        >
-                            {isEquipped ? 'Equipped' : 'Equip'}
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() => handleBuyPet(pet)}
-                            disabled={!(purchaseWithGold ? canAffordGold : canAffordDiamonds)}
-                            className="w-full mt-2 bg-orange-500 hover:bg-orange-600 text-black font-bold py-2 px-4 rounded-lg border-b-4 border-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:border-gray-700 disabled:text-gray-400 flex items-center justify-center"
-                        >
-                            {purchaseWithGold ? `💰 ${pet.cost.gold.toLocaleString()}` : `💎 ${pet.cost.diamonds.toLocaleString()}`}
-                        </button>
-                    )}
-                </div>
-            </div>
-        );
+    const rarityColor = {
+        Standard: 'border-gray-500',
+        Featured: 'border-purple-400',
+        Legendary: 'border-yellow-300',
     };
 
     return (
-        <div className="w-full h-full flex flex-col bg-black bg-opacity-70 p-4 rounded-xl border-2 border-green-500">
-            <h3 className="text-center text-3xl font-bold text-orange-300 mb-6">PETS</h3>
-            <div className="flex-grow overflow-y-auto pr-2">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
-                    {allPets.map(p => <PetCard key={p.id} pet={p} />)}
+        <div 
+            onClick={onClick}
+            className={`bg-gray-800 text-white rounded p-2 flex items-center justify-between border-2 ${rarityColor[p.rarity]} ${isSelected ? 'ring-2 ring-cyan-400' : ''} cursor-pointer`}>
+            <div>
+                <p className="text-sm font-bold">{p.name}</p>
+                <p className="text-xs text-gray-400">{p.position}</p>
+            </div>
+            <p className="text-lg font-black">{p.overall}</p>
+        </div>
+    );
+};
+
+
+const GamePlanScreen: React.FC<GamePlanScreenProps> = ({ player, setPlayer }) => {
+    const [selectedSquadIndex, setSelectedSquadIndex] = useState<number | null>(null);
+
+    const handlePlayerSelect = (playerId: string) => {
+        if (selectedSquadIndex === null) return;
+        
+        // Cannot select a player who is already in the squad or subs
+        if (player.squad.includes(playerId) || player.substitutes.includes(playerId)) {
+            // Logic for swapping
+            const targetList = player.squad.includes(playerId) ? 'squad' : 'substitutes';
+            const targetIndex = player[targetList].indexOf(playerId);
+
+            const playerToSwapOut = player.squad[selectedSquadIndex];
+
+            const newSquad = [...player.squad];
+            const newSubs = [...player.substitutes];
+
+            if (targetList === 'squad') {
+                newSquad[selectedSquadIndex] = playerId;
+                newSquad[targetIndex] = playerToSwapOut;
+            } else { // target is substitutes
+                newSquad[selectedSquadIndex] = playerId;
+                newSubs[targetIndex] = playerToSwapOut;
+            }
+            
+            setPlayer(p => p ? {...p, squad: newSquad, substitutes: newSubs } : null);
+
+        } else {
+            // Add player to squad
+            const newSquad = [...player.squad];
+            const playerToBench = newSquad[selectedSquadIndex];
+            newSquad[selectedSquadIndex] = playerId;
+            
+            const newSubstitutes = [...player.substitutes, playerToBench].filter(id => !newSquad.includes(id));
+
+            setPlayer(p => p ? { ...p, squad: newSquad, substitutes: newSubstitutes.slice(0, 7) } : null);
+        }
+        setSelectedSquadIndex(null);
+    };
+
+    const formation = FORMATIONS[player.activeFormationId] || FORMATIONS['4-3-3'];
+    const ownedPlayersNotInLineup = player.ownedPlayerIds
+        .filter(id => !player.squad.includes(id) && !player.substitutes.includes(id))
+        .map(id => PLAYERS[id])
+        .sort((a,b) => b.overall - a.overall);
+
+
+    return (
+        <div className="w-full h-full flex flex-col md:flex-row gap-4 bg-black bg-opacity-70 p-4 rounded-xl border-2 border-green-500">
+            {/* Left side: Squad and Subs */}
+            <div className="w-full md:w-1/2 flex flex-col">
+                <h3 className="text-center text-xl font-bold text-green-300 mb-2">SQUAD ({player.activeFormationId})</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 flex-grow">
+                    {player.squad.map((playerId, index) => (
+                        <div key={`${playerId}-${index}`} onClick={() => setSelectedSquadIndex(index)} className="relative">
+                            <PlayerCard playerId={playerId} isSelected={selectedSquadIndex === index} onClick={() => setSelectedSquadIndex(index)} />
+                             <span className="absolute top-0 left-0 bg-black/50 text-white text-xs font-bold px-1 rounded-br-md">{formation.positions[index]}</span>
+                        </div>
+                    ))}
+                </div>
+                 <h3 className="text-center text-xl font-bold text-green-300 my-2">SUBSTITUTES</h3>
+                <div className="grid grid-cols-4 gap-2">
+                     {player.substitutes.map((playerId, index) => (
+                        <div key={`${playerId}-${index}`} className="relative">
+                           <PlayerCard playerId={playerId} isSelected={false} onClick={() => {}} />
+                        </div>
+                    ))}
+                </div>
+            </div>
+            
+            {/* Right side: Owned Players */}
+            <div className="w-full md:w-1/2 flex flex-col">
+                <h3 className="text-center text-xl font-bold text-green-300 mb-2">RESERVES</h3>
+                 <div className="flex-grow overflow-y-auto pr-1 bg-gray-900/50 p-2 rounded-lg">
+                    {selectedSquadIndex !== null ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {ownedPlayersNotInLineup.map(p => (
+                                <PlayerCard key={p.id} playerId={p.id} isSelected={false} onClick={() => handlePlayerSelect(p.id)} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center text-gray-400 p-8">Select a player from your squad to replace.</div>
+                    )}
                 </div>
             </div>
         </div>
     );
 };
 
-export default PetStore;
+export default GamePlanScreen;

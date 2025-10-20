@@ -25,15 +25,15 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoaded }) => {
 
     return (
         <div className="h-screen w-screen flex flex-col items-center justify-center bg-gray-900 text-white animate-fade-in">
-            <h1 className="text-3xl sm:text-5xl text-orange-400 font-bold mb-2">BATTLE ROYALE</h1>
-            <h2 className="text-xl text-gray-300 mb-8">SURVIVAL GROUNDS</h2>
+            <h1 className="text-3xl sm:text-5xl text-cyan-400 font-bold mb-2">eFootball MOBILE 25</h1>
+            <h2 className="text-xl text-gray-300 mb-8">LOADING...</h2>
             <div className="w-full max-w-md bg-gray-700 rounded-full h-4 border-2 border-gray-600 mt-4">
                 <div 
-                    className="bg-orange-500 h-full rounded-full transition-all duration-150 ease-linear"
+                    className="bg-cyan-500 h-full rounded-full transition-all duration-150 ease-linear"
                     style={{ width: `${progress}%` }}
                 ></div>
             </div>
-            <p className="mt-2 text-orange-200">{progress}% Loading Assets...</p>
+            <p className="mt-2 text-cyan-200">{progress}%</p>
         </div>
     );
 };

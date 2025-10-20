@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { auth, googleProvider } from '../services/firebase';
 import { GoogleIcon, EmailIcon } from './ui/icons';
@@ -32,9 +33,9 @@ const LoginScreen: React.FC = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-900 bg-opacity-70 p-4">
-            <div className="w-full max-w-md bg-gray-800 bg-opacity-80 rounded-lg shadow-2xl p-8 border-2 border-orange-500">
-                <h1 className="text-4xl font-bold text-orange-400 text-center mb-2 tracking-wider">BATTLE ROYALE</h1>
-                <h2 className="text-xl text-gray-300 text-center mb-8">Be the last one standing.</h2>
+            <div className="w-full max-w-md bg-gray-800 bg-opacity-80 rounded-lg shadow-2xl p-8 border-2 border-cyan-500">
+                <h1 className="text-4xl font-bold text-cyan-400 text-center mb-2 tracking-wider">eFootball Mobile 25</h1>
+                <h2 className="text-xl text-gray-300 text-center mb-8">Build Your Dream Team.</h2>
 
                 {error && <p className="text-red-500 text-center mb-4 text-xs">{error}</p>}
 
@@ -44,7 +45,7 @@ const LoginScreen: React.FC = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="Email"
-                        className="w-full bg-gray-700 text-white p-3 rounded-md mb-4 border-2 border-gray-600 focus:border-orange-500 focus:outline-none"
+                        className="w-full bg-gray-700 text-white p-3 rounded-md mb-4 border-2 border-gray-600 focus:border-cyan-500 focus:outline-none"
                         required
                     />
                     <input
@@ -52,17 +53,17 @@ const LoginScreen: React.FC = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Password"
-                        className="w-full bg-gray-700 text-white p-3 rounded-md mb-4 border-2 border-gray-600 focus:border-orange-500 focus:outline-none"
+                        className="w-full bg-gray-700 text-white p-3 rounded-md mb-4 border-2 border-gray-600 focus:border-cyan-500 focus:outline-none"
                         required
                     />
-                    <button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 px-4 rounded-md border-2 border-orange-700 shadow-lg transition duration-200 mb-4 flex items-center justify-center transform hover:-translate-y-1 hover:brightness-110">
+                    <button type="submit" className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-bold py-3 px-4 rounded-md border-2 border-cyan-700 shadow-lg transition duration-200 mb-4 flex items-center justify-center transform hover:-translate-y-1 hover:brightness-110">
                         <EmailIcon className="h-5 w-5 mr-2" />
                         {isSignUp ? 'Sign Up with Email' : 'Login with Email'}
                     </button>
                 </form>
 
                 <div className="text-center my-4">
-                    <button onClick={() => setIsSignUp(!isSignUp)} className="text-orange-400 hover:text-orange-300 text-sm">
+                    <button onClick={() => setIsSignUp(!isSignUp)} className="text-cyan-400 hover:text-cyan-300 text-sm">
                         {isSignUp ? 'Already have an account? Login' : "Don't have an account? Sign Up"}
                     </button>
                 </div>

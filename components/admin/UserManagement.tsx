@@ -10,8 +10,9 @@ const UserManagement: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [editingUser, setEditingUser] = useState<Player | null>(null);
-    const [editGold, setEditGold] = useState(0);
-    const [editDiamonds, setEditDiamonds] = useState(0);
+    // FIX: Rename state to match Player type (gp, coins).
+    const [editGp, setEditGp] = useState(0);
+    const [editCoins, setEditCoins] = useState(0);
 
     useEffect(() => {
         const usersRef = database.ref('users');
@@ -39,15 +40,17 @@ const UserManagement: React.FC = () => {
 
     const openEditModal = (user: Player) => {
         setEditingUser(user);
-        setEditGold(user.gold ?? 0);
-        setEditDiamonds(user.diamonds ?? 0);
+        // FIX: Initialize state with gp and coins from user object.
+        setEditGp(user.gp ?? 0);
+        setEditCoins(user.coins ?? 0);
     };
     
     const handleSaveChanges = () => {
         if (!editingUser) return;
+        // FIX: Update database with correct property names (gp, coins).
         database.ref(`users/${editingUser.uid}`).update({
-            gold: Number(editGold),
-            diamonds: Number(editDiamonds),
+            gp: Number(editGp),
+            coins: Number(editCoins),
         });
         setEditingUser(null);
     };
@@ -69,8 +72,9 @@ const UserManagement: React.FC = () => {
                         <tr className="border-b border-gray-700">
                             <th className="p-2">Username</th>
                             <th className="p-2">Email</th>
-                            <th className="p-2">Gold</th>
-                            <th className="p-2">Diamonds</th>
+                            {/* FIX: Update table headers. */}
+                            <th className="p-2">GP</th>
+                            <th className="p-2">Coins</th>
                             <th className="p-2">Status</th>
                             <th className="p-2">Actions</th>
                         </tr>
@@ -80,8 +84,9 @@ const UserManagement: React.FC = () => {
                             <tr key={user.uid} className="border-b border-gray-700 hover:bg-gray-700">
                                 <td className="p-2">{user.username}</td>
                                 <td className="p-2">{user.email}</td>
-                                <td className="p-2">{Math.floor(user.gold ?? 0).toLocaleString()}</td>
-                                <td className="p-2">{(user.diamonds ?? 0).toLocaleString()}</td>
+                                {/* FIX: Display gp and coins. */}
+                                <td className="p-2">{Math.floor(user.gp ?? 0).toLocaleString()}</td>
+                                <td className="p-2">{(user.coins ?? 0).toLocaleString()}</td>
                                 <td className="p-2">{user.banned ? <span className="text-red-500">Banned</span> : <span className="text-green-500">Active</span>}</td>
                                 <td className="p-2 space-x-2">
                                     <button onClick={() => openEditModal(user)} className="text-blue-400 hover:text-blue-300 text-sm">Edit</button>
@@ -98,12 +103,13 @@ const UserManagement: React.FC = () => {
                 <Modal title={`Edit ${editingUser.username}`} onClose={() => setEditingUser(null)}>
                     <div className="space-y-4 p-4">
                         <div>
-                            <label className="block text-sm text-gray-400">Gold</label>
-                            <input type="number" value={editGold} onChange={e => setEditGold(Number(e.target.value))} className="w-full bg-gray-700 p-2 rounded" />
+                            {/* FIX: Update labels and state binding. */}
+                            <label className="block text-sm text-gray-400">GP</label>
+                            <input type="number" value={editGp} onChange={e => setEditGp(Number(e.target.value))} className="w-full bg-gray-700 p-2 rounded" />
                         </div>
                          <div>
-                            <label className="block text-sm text-gray-400">Diamonds</label>
-                            <input type="number" value={editDiamonds} onChange={e => setEditDiamonds(Number(e.target.value))} className="w-full bg-gray-700 p-2 rounded" />
+                            <label className="block text-sm text-gray-400">Coins</label>
+                            <input type="number" value={editCoins} onChange={e => setEditCoins(Number(e.target.value))} className="w-full bg-gray-700 p-2 rounded" />
                         </div>
                         <button onClick={handleSaveChanges} className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 rounded">Save Changes</button>
                     </div>
