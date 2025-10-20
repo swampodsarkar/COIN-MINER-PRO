@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { Player, SystemData } from '../../types';
 import { AXES } from '../../gameConfig';
+import { playMineSound } from '../../assets/sounds';
 
 interface MinerProps {
     player: Player;
@@ -45,6 +45,7 @@ const Miner: React.FC<MinerProps> = ({ player, onMine, system, effectiveMiningPo
     const handleMineClick = () => {
         if (isMining) return;
         
+        playMineSound();
         setIsMining(true);
 
         const rushMultiplier = (system?.events.goldenRush && system.events.goldenRushEnds > Date.now()) ? 2 : 1;
@@ -140,7 +141,7 @@ const Miner: React.FC<MinerProps> = ({ player, onMine, system, effectiveMiningPo
                 })}
                 <button onClick={handleMineClick} className="w-64 h-64 bg-gray-700 rounded-full border-8 border-yellow-600 flex items-center justify-center focus:outline-none transition-transform duration-100 active:scale-95">
                     <span 
-                        className={`text-7xl transition-all duration-300 ${isMining ? 'transform -rotate-45' : ''}`}
+                        className={`text-7xl transition-transform duration-300 ${isMining ? 'animate-pickaxe-mine' : 'transform rotate-10'}`}
                     >
                         {pickaxeDetails.emoji}
                     </span>

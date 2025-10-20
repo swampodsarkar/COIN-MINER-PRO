@@ -37,6 +37,7 @@ const GameScreen: React.FC = () => {
     const [pulseGems, setPulseGems] = useState(false);
     const [spinResult, setSpinResult] = useState<{ message: string } | null>(null);
     const [isSpinning, setIsSpinning] = useState(false);
+    const [screenShake, setScreenShake] = useState(false);
 
     const playerRef = useRef(player);
     playerRef.current = player;
@@ -169,6 +170,8 @@ const GameScreen: React.FC = () => {
 
     const handleMine = (amount: number) => {
         setPlayer(p => p ? { ...p, gold: p.gold + amount } : null);
+        setScreenShake(true);
+        setTimeout(() => setScreenShake(false), 300);
     };
 
     const handleUpgradeAutoMiner = () => {
@@ -410,7 +413,7 @@ const GameScreen: React.FC = () => {
     const equippedHero = player.equipment.equippedHero && HEROES[player.equipment.equippedHero];
 
     return (
-        <div className="relative h-full w-full flex flex-col items-center justify-between overflow-hidden">
+        <div className={`relative h-full w-full flex flex-col items-center justify-between overflow-hidden ${screenShake ? 'animate-screen-shake' : ''}`}>
             {showDailyReward && !player.dailyRewardClaimed && <DailyRewardModal loginStreak={player.loginStreak} onClaim={handleClaimDailyReward} onClose={() => setShowDailyReward(false)} />}
 
             <EventAnnouncer system={system} />
@@ -434,7 +437,9 @@ const GameScreen: React.FC = () => {
             </header>
             
             <main className="flex-grow w-full flex flex-col items-center justify-center p-4">
-                {renderView()}
+                <div key={activeView} className="w-full h-full flex flex-col items-center justify-center animate-fade-in">
+                    {renderView()}
+                </div>
             </main>
             
              {/* Ad Placeholder */}
